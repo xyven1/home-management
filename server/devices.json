@@ -1,0 +1,164 @@
+[
+  {
+    "name": "Pump Room",
+    "serialNumber": "221820K13017B6",
+    "ip": "10.200.10.221",
+    "port": "49154"
+  },
+  {
+    "name": "Living Room",
+    "serialNumber": "221820K1300E7B",
+    "ip": "10.200.10.138",
+    "port": "49154"
+  },
+  {
+    "name": "Stadium Flood Master Bath",
+    "serialNumber": "221820K130164A",
+    "ip": "10.200.10.240",
+    "port": "49154"
+  },
+  {
+    "name": "Master Bath",
+    "serialNumber": "221941K1300385",
+    "ip": "10.200.10.136",
+    "port": "49153"
+  },
+  {
+    "name": "Front Hall",
+    "serialNumber": "221941K1300690",
+    "ip": "10.200.10.228",
+    "port": "49153"
+  },
+  {
+    "name": "Mud Room",
+    "serialNumber": "221820K13012CF",
+    "ip": "10.200.10.238",
+    "port": "49153"
+  },
+  {
+    "name": "Bedroom",
+    "serialNumber": "22A9B1K0107F37",
+    "ip": "10.200.10.180",
+    "port": "49153"
+  },
+  {
+    "name": "Stadium Flood Middle",
+    "serialNumber": "M1BAA129N0126E",
+    "ip": "10.200.10.239",
+    "port": "49153"
+  },
+  {
+    "name": "Stadium Flood Garage",
+    "serialNumber": "M1BAA129N01187",
+    "ip": "10.200.10.177",
+    "port": "49153"
+  },
+  {
+    "name": "Garage",
+    "serialNumber": "2279B1K0110A98",
+    "ip": "10.200.10.216",
+    "port": "49153"
+  },
+  {
+    "name": "Master Bath Mirror",
+    "serialNumber": "M1BAA129N0403A",
+    "ip": "10.200.10.199",
+    "port": "49153"
+  },
+  {
+    "name": "Boiler Room",
+    "serialNumber": "M1BAA129N03BE1",
+    "ip": "10.200.10.225",
+    "port": "49153"
+  },
+  {
+    "name": "Control Room",
+    "serialNumber": "M1BAA129N01BAB",
+    "ip": "10.200.10.200",
+    "port": "49153"
+  },
+  {
+    "name": "Master Overhead",
+    "serialNumber": "M1BAA129N03A1C",
+    "ip": "10.200.10.197",
+    "port": "49153"
+  },
+  {
+    "name": "Ducks",
+    "serialNumber": "221814K0102A85",
+    "ip": "10.200.10.184",
+    "port": "49153"
+  },
+  {
+    "name": "Stadium Flood Small Garage",
+    "serialNumber": "M1BAA129N012B4",
+    "ip": "10.200.10.147",
+    "port": "49153"
+  },
+  {
+    "name": "Driveway Front Floods",
+    "serialNumber": "M1BAA129N012B0",
+    "ip": "10.200.10.139",
+    "port": "49153"
+  },
+  {
+    "name": "Corner Bedroom",
+    "serialNumber": "M1BAA129N038A1",
+    "ip": "10.200.10.223",
+    "port": "49153"
+  },
+  {
+    "name": "Kitchen",
+    "serialNumber": "221941K13003F0",
+    "ip": "10.200.10.191",
+    "port": "49153"
+  },
+  {
+    "name": "Front Porch",
+    "serialNumber": "221941K13006EB",
+    "ip": "10.200.10.214",
+    "port": "49153"
+  },
+  {
+    "name": "Front Bedroom",
+    "serialNumber": "M1BAA129N03A28",
+    "ip": "10.200.10.220",
+    "port": "49153"
+  },
+  {
+    "name": "Small Garage Front Flood",
+    "serialNumber": "M1BAA129N019C7",
+    "ip": "10.200.10.106",
+    "port": "49153"
+  },
+  {
+    "name": "Diningroom",
+    "serialNumber": "221820K1300DC1",
+    "ip": "10.200.10.213",
+    "port": "49153"
+  },
+  {
+    "name": "Porch",
+    "serialNumber": "221820K130105F",
+    "ip": "10.200.10.230",
+    "port": "49154"
+  },
+  {
+    "name": "Downstairs Bedroom",
+    "serialNumber": "M1CAA129N014E7",
+    "ip": "10.200.10.174",
+    "port": "49153"
+  },
+  {
+    "name": "Downstairs Back Hall",
+    "serialNumber": "M1CAA129N012DB",
+    "ip": "10.200.10.168",
+    "port": "49153"
+  },
+  {
+    "name": "Wemo Light Switch",
+    "serialNumber": "M16BA129N0081E",
+    "ip": "10.200.10.211",
+    "port": "49153"
+  }
+]
