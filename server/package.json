@@ -18,7 +18,7 @@
     "nodemon": "^2.0.15"
   },
   "nodemonConfig": {
-    "watch": [  
+    "watch": [
       "server/"
     ],
     "ext": "js",

@@ -26,14 +26,14 @@
     <v-row align="center" style="height:100%; margin: 0;">
       <v-col cols="1">
         <v-btn v-show="screen>0  && !mobile" icon class="interactable" @click="prev">
-          <v-icon size="x-large">mdi-chevron-left</v-icon>
+          <v-icon size="x-large" :icon="mdiChevronLeft"/>
         </v-btn>
       </v-col>
       <v-col class="text-center">
       </v-col>
       <v-col cols="1">
         <v-btn v-show="screen<svg?.length-1 && !mobile" @click="next" icon class="interactable float-right">
-          <v-icon size="x-large">mdi-chevron-right</v-icon>
+          <v-icon size="x-large" :icon="mdiChevronRight"/>
         </v-btn>
       </v-col>
     </v-row>
@@ -50,6 +50,7 @@
   <Dialog ref="removeDialog" agreeText="Continue" title="Dissociate Region" message="Select a region to clear" @agree="dissociateSwitch"/>
 </template>
 <script>
+import { mdiChevronLeft, mdiChevronRight } from '@mdi/js'
 import Dialog from '../components/Dialog.vue'
 import { EventEmitter, once } from 'events'
 import { toggle } from '../utils/switch.js'
@@ -71,6 +72,7 @@ export default {
       selectedSwitch: null,
       timeOut: null,
       switchesForAssociation: [],
+      mdiChevronLeft, mdiChevronRight,
     }
   },
   async mounted(){

@@ -2,7 +2,7 @@
   <v-app>
     <v-bottom-navigation app absolute>
       <v-btn v-for="route in routes" :to="route.path" size="x-large">
-        <v-icon>{{ route.icon }}</v-icon>
+        <v-icon :icon="route.icon"/>
       </v-btn>
     </v-bottom-navigation>
     <v-main fluid>
@@ -12,6 +12,7 @@
 </template>
 
 <script>
+import { mdiHome, mdiLightbulb, mdiSpeakerWireless} from '@mdi/js'
 export default {
   name: 'App',
   data () {
@@ -20,17 +21,17 @@ export default {
         {
           path: '/',
           name: 'Home',
-          icon: 'mdi-home',
+          icon: mdiHome,
         },
         {
           path: '/lights',
           name: 'Lights',
-          icon: 'mdi-lightbulb',
+          icon: mdiLightbulb,
         },
         {
           path: '/audio',
           name: 'Audio',
-          icon: 'mdi-speaker-wireless',
+          icon: mdiSpeakerWireless,
         }
       ]
     }
@@ -41,7 +42,7 @@ export default {
 <style>
 html, body, #app{
   overflow: hidden;
-  font-family: 'Raleway', sans-serif;
+  font-family: 'Nunito', sans-serif !important;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }

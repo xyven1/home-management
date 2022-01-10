@@ -4,12 +4,11 @@
       <v-template v-if="mapInterface">{{ screenName }}</v-template>
     </v-app-bar-title>
     <v-spacer/>
-    <v-btn icon @click="bind" v-if="mapInterface"><v-icon>mdi-plus</v-icon></v-btn>
-    <v-btn icon @click="unbind" v-if="mapInterface"><v-icon>mdi-minus</v-icon></v-btn>
+    <v-btn icon @click="bind" v-if="mapInterface"><v-icon :icon="mdiPlus"/></v-btn>
+    <v-btn icon @click="unbind" v-if="mapInterface"><v-icon :icon="mdiMinus"/></v-btn>
     <v-btn @click="allOff">All Off</v-btn> 
     <v-btn icon @click="toggleInterfaceType">
-      <v-icon v-if="mapInterface">mdi-card-text-outline</v-icon>
-      <v-icon v-else>mdi-map</v-icon>
+      <v-icon :icon="mapInterface ? mdiCardTextOutline : mdiMap"/>
     </v-btn>
   </v-app-bar>
   <Map v-if="mapInterface" ref="map" v-model:screenName="screenName"/>
@@ -17,6 +16,7 @@
   <Dialog ref="allOff" title="Are you sure you want to turn off all the lights?" agreeText="Yes" cancelText="No"/>
 </template>
 <script>
+import { mdiPlus, mdiMinus, mdiCardTextOutline, mdiMap } from '@mdi/js'
 import Map from '../components/Map.vue'
 import Dialog from '../components/Dialog.vue'
 import ListOfButtons from '../components/ListOfButtons.vue'
@@ -31,6 +31,7 @@ export default {
     return {
       mapInterface: false,
       screenName: null,
+      mdiPlus, mdiMinus, mdiCardTextOutline, mdiMap
     }
   },
   mounted(){

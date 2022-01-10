@@ -3,11 +3,12 @@
     <v-btn variant="outlined" size="x-large" icon large class="ma-2"
             v-for="(input, i) in inputs" :key="i" @click="changeInput(input.command)"
             :color="currentInput == input.command ?'primary' :'grey'">
-      <v-icon>{{input.icon}}</v-icon>
+      <v-icon :icon="input.icon"/>
     </v-btn>
   </v-container>  
 </template>
 <script>
+import { mdiBluetooth, mdiDesktopClassic, mdiSpotify} from '@mdi/js'
 export default {
   name: 'Audio',
   data(){
@@ -16,15 +17,15 @@ export default {
       inputs:[
         {
           name: "Bluetooth",
-          icon: "mdi-bluetooth",
+          icon: mdiBluetooth,
           command: "AV3"
         }, {
           name: "Greg Desktop",
-          icon: "mdi-desktop-classic",
+          icon: mdiDesktopClassic,
           command: "AUDIO1"
         }, {
           name: "Spotify",
-          icon: "mdi-spotify",
+          icon: mdiSpotify,
           command: "Spotify"
         },
       ]
