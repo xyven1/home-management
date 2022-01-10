@@ -2,7 +2,6 @@ import { createApp } from 'vue'
 import App from './App.vue'
 import vuetify from './plugins/vuetify'
 import { loadFonts } from './plugins/webfontloader'
-import './registerServiceWorker'
 import { io } from 'socket.io-client';
 import { createRouter, createWebHistory  } from 'vue-router';
 
@@ -24,8 +23,15 @@ const router = createRouter({
 
 const app = createApp(App)
 
+//persistent pages in vuex
+router.beforeEach((to, from, next) => {
+  localStorage.setItem('currentRoute', to.path)
+  next()
+})
+router.push(localStorage.getItem('currentRoute') || '/')
+
 app.use(vuetify)
 app.use(router)
-app.config.globalProperties.$socket = io("http://10.200.10.23:3001")
+app.config.globalProperties.$socket = io(`http://10.200.10.23:${process.env.NODE_ENV === 'development' ? '3001' : '3000'}`)
 
 app.mount('#app')

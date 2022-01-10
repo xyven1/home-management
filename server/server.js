@@ -24,7 +24,7 @@ app.use(compression())
 app.use(express.static('../dist'))
 
 //serves static files in dist
-app.get('/', (req, res) => {
+app.get(/.*/, (req, res) => {
   res.sendFile(path.join(path.resolve(), '../dist/index.html'))
 })
 
