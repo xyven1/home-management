@@ -24,14 +24,15 @@ const router = createRouter({
 const app = createApp(App)
 
 //persistent pages in vuex
-router.beforeEach((to, from, next) => {
+router.afterEach((to, from, next) => {
   localStorage.setItem('currentRoute', to.path)
   next()
 })
-router.push(localStorage.getItem('currentRoute') || '/')
 
 app.use(vuetify)
 app.use(router)
 app.config.globalProperties.$socket = io(`http://10.200.10.23:${process.env.NODE_ENV === 'development' ? '3001' : '3000'}`)
 
 app.mount('#app')
+
+router.push(localStorage.getItem('currentRoute') || '/')
