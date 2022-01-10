@@ -16,7 +16,6 @@ function start() {
       if(err.code == "ECONNREFUSED")
         state = 1
     })
-    console.log(state)
     if(state != prevState) {
       console.log("TV state changed to:", state ? "down" : "up")
       axios.post('http://10.200.10.35', state ? "down" : "up").catch(err => console.error(err))

@@ -1,15 +1,9 @@
 <template>
   <v-app>
     <v-bottom-navigation app absolute>
-      <router-link to="/">
-        <v-icon>mdi-home</v-icon>
-      </router-link>
-      <router-link to="/lights">
-        <v-icon>mdi-lightbulb</v-icon>
-      </router-link>  
-      <router-link to="/audio">
-        <v-icon>mdi-audio</v-icon>
-      </router-link>
+      <v-btn v-for="route in routes" :to="route.path" size="x-large">
+        <v-icon>{{ route.icon }}</v-icon>
+      </v-btn>
     </v-bottom-navigation>
     <v-main fluid>
       <router-view/>
@@ -20,6 +14,27 @@
 <script>
 export default {
   name: 'App',
+  data () {
+    return {
+      routes: [
+        {
+          path: '/',
+          name: 'Home',
+          icon: 'mdi-home',
+        },
+        {
+          path: '/lights',
+          name: 'Lights',
+          icon: 'mdi-lightbulb',
+        },
+        {
+          path: '/audio',
+          name: 'Audio',
+          icon: 'mdi-speaker-wireless',
+        }
+      ]
+    }
+  },
 }
 </script>
 

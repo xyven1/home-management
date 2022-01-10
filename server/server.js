@@ -21,11 +21,11 @@ const io = new Server(server, {
 //middleware
 app.use(cors())
 app.use(compression())
-app.use(express.static('dist'))
+app.use(express.static('../dist'))
 
 //serves static files in dist
 app.get('/', (req, res) => {
-  res.sendFile(path.join(path.resolve(), '/dist/index.html'))
+  res.sendFile(path.join(path.resolve(), '../dist/index.html'))
 })
 
 //web socket

@@ -23,7 +23,7 @@
     </svg>
   </transition>
   <div class="overlay">
-    <v-row class="row" align="center" style="height:100%; margin: 0;">
+    <v-row align="center" style="height:100%; margin: 0;">
       <v-col cols="1">
         <v-btn v-show="screen>0  && !mobile" icon class="interactable" @click="prev">
           <v-icon size="x-large">mdi-chevron-left</v-icon>
@@ -184,7 +184,6 @@ export default {
 .slide-leave-active,
 .slideback-enter-active,
 .slideback-leave-active {
-  position: absolute !important;
   transition: .25s;
 }
 
@@ -196,7 +195,7 @@ export default {
 }
 
 .overlay{
-  position:absolute;
+  position: absolute;
   pointer-events: none;
   top:0;
   right:0;
