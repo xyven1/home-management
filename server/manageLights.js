@@ -120,9 +120,30 @@ export default io => {
             if(err) return callback(err)
             callback(result)
           })
-        }
-      )
+        })
       else callback("Device not found")
+    })
+
+    //allows client to set switch state using serial number
+    socket.on('setSwitch', (serialNumber, state, callback) => {
+      console.log('Setting switch with serial number: ' + serialNumber + ' to state: ' + state)
+      let device = devices[serialNumber]
+      if(device)
+        device.setBinaryState(state, (err, result)=>{
+          if(err) return callback(err)
+          callback(result)
+        })
+      else callback("Device not found")
+    })
+
+    //allows client to turn on or off all switches
+    socket.on('setAllSwitches', (state, callback) => {
+      console.log('Setting all switches to state: ' + state)
+      for(const [, device] of Object.entries(devices))
+        device.setBinaryState(state, (err, result)=>{
+          if(err) return callback(err)
+          callback(result)
+        })
     })
 
     //allows client to change serial number associated to a region
