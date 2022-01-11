@@ -1,7 +1,7 @@
 <template>
   <v-app-bar> 
     <v-app-bar-title>
-      <v-template v-if="mapInterface">{{ screenName }}</v-template>
+      <template v-if="mapInterface">{{ screenName }}</template>
     </v-app-bar-title>
     <v-spacer/>
     <v-btn icon @click="bind" v-if="mapInterface"><v-icon :icon="mdiPlus"/></v-btn>

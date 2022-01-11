@@ -8,7 +8,7 @@
   </v-container>
 </template>
 <style>
-.text-h2{
+.text-h2 {
   font-family: 'Nunito', sans-serif !important;
 }
 </style>

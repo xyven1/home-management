@@ -41,7 +41,7 @@ export default {
     changeInput(input){
       var vm = this;
       vm.$socket.emit('changeInput', input, res=>{
-        console.log(res)
+        vm.currentInput = input
       });
     },
     changeVolume(volume){
