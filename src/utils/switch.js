@@ -9,7 +9,7 @@
 async function toggle(socket, sn, sw){
   socket.emit('toggleSwitch', sn, res => {
     if(sw?.state)
-      sw.state = res.BinaryState == 'Error' ? 'Error' : parseInt(res.BinaryState)
+      sw.state = parseInt(res.BinaryState) || res.BinaryState
   })
 }
 

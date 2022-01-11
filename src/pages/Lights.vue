@@ -11,8 +11,10 @@
       <v-icon :icon="mapInterface ? mdiCardTextOutline : mdiMap"/>
     </v-btn>
   </v-app-bar>
-  <Map v-if="mapInterface" ref="map" v-model:screenName="screenName"/>
-  <ListOfButtons v-else ref="list"/>
+  <KeepAlive>
+    <Map v-if="mapInterface" ref="map" v-model:screenName="screenName"/>
+    <ListOfButtons v-else ref="list"/>
+  </KeepAlive>
   <Dialog ref="allOff" title="Are you sure you want to turn off all the lights?" agreeText="Yes" cancelText="No"/>
 </template>
 <script>
@@ -56,9 +58,8 @@ export default {
     async allOff(){ //turns all switches off, with confirmation
       var vm = this
       if(await vm.$refs.allOff.show())
-        vm.switches.forEach(sw => {
-          if(sw.state ==1)
-            vm.toggle(sw)
+        vm.$socket.emit('setAllSwitches', 0, ()=>{
+          vm.$refs.map.switches.forEach(s=>s.sw.state = 0)
         })
     },
     bind(){

@@ -126,6 +126,8 @@ export default io => {
 
     //allows client to set switch state using serial number
     socket.on('setSwitch', (serialNumber, state, callback) => {
+      if(!({0:1,1:1})[state])
+        return callback("invalid state")
       console.log('Setting switch with serial number: ' + serialNumber + ' to state: ' + state)
       let device = devices[serialNumber]
       if(device)
@@ -138,6 +140,8 @@ export default io => {
 
     //allows client to turn on or off all switches
     socket.on('setAllSwitches', (state, callback) => {
+      if(!({0:1,1:1})[state])
+        return callback("invalid state")
       console.log('Setting all switches to state: ' + state)
       for(const [, device] of Object.entries(devices))
         device.setBinaryState(state, (err, result)=>{

@@ -9,7 +9,7 @@ export async function loadFonts () {
 
   webFontLoader.load({
     google: {
-      families: ['Nunito'],
+      families: ['Nunito','Roboto:300'],
     },
   })
 }
