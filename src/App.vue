@@ -7,7 +7,7 @@
     </v-bottom-navigation>
     <v-main fluid style="max-height: 100%">
       <keep-alive>
-        <component v-bind:is="currentTab"></component>
+        <component :is="currentTab"></component>
       </keep-alive>
     </v-main>
   </v-app>
@@ -63,5 +63,14 @@ html, body, #app{
   font-family: 'Nunito', sans-serif !important;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.5s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>
