@@ -1,5 +1,5 @@
 <template>
-  <v-container class="d-flex justify-center align-content-end align-end flex-wrap" fluid style="height: 100%;">
+  <v-container class="d-flex justify-center align-content-end flex-wrap" fluid style="height: 100%;">
     <v-btn variant="outlined" size="x-large" icon large class="ma-2"
             v-for="(input, i) in inputs" :key="i" @click="changeInput(input.command)"
             :color="currentInput == input.command ?'primary' :'grey'">

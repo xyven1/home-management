@@ -98,7 +98,6 @@ export default {
       var vm = this
       if(s.sn)
         vm.$socket.emit("getSwitch", s.sn, res=>{
-          console.log(res)
           s.sw = res
         })
     },
