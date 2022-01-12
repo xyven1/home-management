@@ -75,7 +75,7 @@ export default io => {
   
   io.on('connection', (socket) => {
     //returns switches from devices object to a callback function
-    socket.on('getSwitches', (callback) => {
+    socket.on('getSwitches', (callback = ()=>{}) => {
       console.log('getting switches')
       callback(Object.entries(devices).map(([, device]) => ({
         name: device.device.friendlyName,
@@ -84,7 +84,7 @@ export default io => {
     })
 
     //returns parsed array containing data for svg, containing associations between map regions and serial number of switch
-    socket.on('getSvg', (callback) => {
+    socket.on('getSvg', (callback = ()=>{}) => {
       console.log('getting svg')
       fs.readFile('./svg.json', (err,data)=>{
         callback(JSON.parse(data))
@@ -92,7 +92,7 @@ export default io => {
     })
 
     //returns the state of a switch given a serial number
-    const getSwitch  = (serialNumber, callback) => {
+    const getSwitch  = (serialNumber, callback = ()=>{}) => {
       console.log('getting switch state:', serialNumber)
       let device = devices[serialNumber]
       if(device)
@@ -109,7 +109,7 @@ export default io => {
     socket.on('getSwitch', getSwitch)
 
     //allows client to toggle switches using serial number
-    socket.on('toggleSwitch', (serialNumber, callback) => {
+    socket.on('toggleSwitch', (serialNumber, callback = ()=>{}) => {
       console.log('Toggling switch with serial number: ' + serialNumber)
       io.emit('stateChange', {serialNumber: serialNumber, state: 2})
       let device = devices[serialNumber]
@@ -125,7 +125,7 @@ export default io => {
     })
 
     //allows client to set switch state using serial number
-    socket.on('setSwitch', (serialNumber, state, callback) => {
+    socket.on('setSwitch', (serialNumber, state, callback = ()=>{}) => {
       state = parseInt(state)
       if(isNaN(state) || !({0:1,1:1})[state])
         return callback("invalid state")
@@ -140,7 +140,7 @@ export default io => {
     })
 
     //allows client to turn on or off all switches
-    socket.on('setAllSwitches', (state, callback) => {
+    socket.on('setAllSwitches', (state, callback = ()=>{}) => {
       state = parseInt(state)
       if(isNaN(state) || !({0:1,1:1})[state])
         return callback("invalid state")
