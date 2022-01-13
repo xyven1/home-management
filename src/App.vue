@@ -59,7 +59,7 @@ export default {
 
 <style>
 html, body, #app{
-  overflow: hidden;
+  overflow: hidden !important;
   height: 100%;
   font-family: 'Nunito', sans-serif !important;
   -webkit-font-smoothing: antialiased;

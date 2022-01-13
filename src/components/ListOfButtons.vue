@@ -1,5 +1,5 @@
 <template>
-  <v-container class="text-center d-block" style="overflow:scroll; max-height: 100%;">
+  <v-container class="text-center d-block" style="overflow:auto; max-height: 100%;">
     <v-progress-circular class="float-middle" :size="70" :width="7" v-if="!switches" indeterminate />
     <template v-for="(sw, index) in switches?.sort((a,b) => a.name.localeCompare(b.name))" :key="index">
       <v-btn @click="toggle($socket, sw.serialNumber, sw)" class="ma-1" :color="({0: 'secondary', 1:'tertiary',  2: 'info', 'Error': 'error'})[sw.state]">
