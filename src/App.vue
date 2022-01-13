@@ -1,5 +1,5 @@
 <template>
-  <v-app>
+  <v-app style="height: 100%">
     <v-bottom-navigation app>
       <v-btn v-for="route in routes" @click="currentTab = route.name" size="x-large" :color="currentTab == route.name ? 'primary' : ''">
         <v-icon :icon="route.icon"/>
@@ -60,6 +60,7 @@ export default {
 <style>
 html, body, #app{
   overflow: hidden;
+  height: 100%;
   font-family: 'Nunito', sans-serif !important;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

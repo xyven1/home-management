@@ -58,9 +58,7 @@ export default {
     async allOff(){ //turns all switches off, with confirmation
       var vm = this
       if(await vm.$refs.allOff.show())
-        vm.$socket.emit('setAllSwitches', 0, ()=>{
-          vm.$refs.map.switches.forEach(s=>s.sw.state = 0)
-        })
+        vm.$socket.emit('setAllSwitches', 0)
     },
     bind(){
       this.$refs.map?.associatePrompt()
