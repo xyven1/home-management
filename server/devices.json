@@ -160,5 +160,29 @@
     "serialNumber": "M16BA129N0081E",
     "ip": "10.200.10.211",
     "port": "49153"
+  },
+  {
+    "name": "Office 2",
+    "serialNumber": "M15BA129N006AB",
+    "ip": "10.200.10.103",
+    "port": "49153"
+  },
+  {
+    "name": "Bedroom Hall",
+    "serialNumber": "M15BA129N0092F",
+    "ip": "10.200.10.188",
+    "port": "49153"
+  },
+  {
+    "name": "Stair Hall",
+    "serialNumber": "M15BA129N003E1",
+    "ip": "10.200.10.183",
+    "port": "49153"
+  },
+  {
+    "name": "Wemo Smart Dimmer",
+    "serialNumber": "M12BA029W05730",
+    "ip": "10.200.10.119",
+    "port": "49152"
   }
 ]
