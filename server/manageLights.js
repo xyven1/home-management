@@ -32,7 +32,7 @@ export default io => {
     devices[client.device.serialNumber] = client
   
     client.on('error', err => {
-      console.error('Client error: %s', err.code)
+      console.error('Client error: %s', err)
     })
   
     client.on('binaryState', value =>{
@@ -43,9 +43,8 @@ export default io => {
   
   //discovers wemo devices connected to network
   function discover() {
-    wemo.discover((err, deviceInfo) => {
-      if(err) 
-        return console.error("Error in discovery:", err)
+    wemo.discover(deviceInfo => {
+      if(!deviceInfo) return
       console.log('Wemo Device Found: %j', deviceInfo.friendlyName)
       manageClient(deviceInfo)
       sync()
@@ -57,12 +56,12 @@ export default io => {
     fs.readFile('./devices.json', (err,data)=>{
       var parsed = JSON.parse(data)
       parsed.forEach(sw => {
-        wemo.load(`http://${sw.ip}:${sw.port}/setup.xml`, (err, deviceInfo)=>{
-          if(err) 
-            return console.error("Failed to Load:", err)
+        wemo.load(`http://${sw.ip}:${sw.port}/setup.xml`).then(deviceInfo=>{
           console.log('Loaded Device: %j', deviceInfo.friendlyName)
           manageClient(deviceInfo)
-        })  
+        }).catch(err=>{
+          console.error('Failed to load device: %s', err)
+        })
       })
     })
   }
@@ -96,14 +95,16 @@ export default io => {
       console.log('getting switch state:', serialNumber)
       let device = devices[serialNumber]
       if(device)
-        device.getBinaryState((err, state) =>{
-          if(err) return callback({status: 'error', err})
-          callback({
+        device.getBinaryState().then(res=>{
+          const state = {
             name: device.device.friendlyName,
-            serialNumber: serialNumber,
-            state: state
-          })
-        })
+            serialNumber,
+            state: res.BinaryState
+          }
+          if(res.brightness)
+            state.brightness = parseInt(res.brightness)
+          callback(state)
+      }).catch(err => callback({status: 'error', err}))
       else callback("device not found:" + serialNumber)
     }
     socket.on('getSwitch', getSwitch)
@@ -114,13 +115,11 @@ export default io => {
       io.emit('stateChange', {serialNumber: serialNumber, state: 2})
       let device = devices[serialNumber]
       if(device)
-        device.getBinaryState((err, state) =>{
-          if(err) return callback(err)
-          device.setBinaryState(state == 1 ? 0 : 1, (err, result)=>{
-            if(err) return callback(err)
+        device.getBinaryState().then(({BinaryState}) =>{
+          device.setBinaryState(BinaryState == 1 ? 0 : 1).then(result =>{
             callback(result)
-          })
-        })
+          }).catch(callback)
+        }).catch(callback)
       else callback("Device not found")
     })
 
@@ -132,10 +131,18 @@ export default io => {
       console.log('Setting switch with serial number: ' + serialNumber + ' to state: ' + state)
       let device = devices[serialNumber]
       if(device)
-        device.setBinaryState(state, (err, result)=>{
-          if(err) return callback(err)
-          callback(result)
-        })
+        device.setBinaryState(state).then(callback).catch(callback)
+      else callback("Device not found")
+    })
+
+    //allows client to set brightness of a switch using serial number
+    socket.on('setBrightness', (serialNumber, brightness, callback = ()=>{}) => {
+      let device = devices[serialNumber]
+      if(device)
+        device.setBrightness(parseInt(brightness)).then((res)=>callback({
+          brightness: parseInt(res.brightness),
+          state: res.BinaryState
+        })).catch(callback)
       else callback("Device not found")
     })
 
@@ -146,10 +153,7 @@ export default io => {
         return callback("invalid state")
       console.log('Setting all switches to state: ' + state)
       for(const [, device] of Object.entries(devices))
-        device.setBinaryState(state, (err, result)=>{
-          if(err) return callback(err)
-          callback(result)
-        })
+        device.setBinaryState(state).then(callback).catch(callback)
     })
 
     //allows client to change serial number associated to a region

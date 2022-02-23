@@ -2,7 +2,7 @@
   "type": "module",
   "scripts": {
     "start": "node -r dotenv-flow/config server.js",
-    "dev": "nodemon --exec npm start"
+    "dev": "nodemon -r dotenv-flow/config server.js"
   },
   "dependencies": {
     "axios": "^0.24.0",
@@ -12,7 +12,7 @@
     "dotenv-flow": "^3.2.0",
     "express": "^4.17.2",
     "socket.io": "^4.4.1",
-    "wemo-client": "^0.15.0"
+    "wemo-client": "github:Xyven1/wemo-client#patch-1"
   },
   "devDependencies": {
     "nodemon": "^2.0.15"
