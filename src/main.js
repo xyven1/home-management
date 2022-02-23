@@ -9,6 +9,6 @@ loadFonts()
 const app = createApp(App)
 
 app.use(vuetify)
-app.config.globalProperties.$socket = io(`http://10.200.10.23:${process.env.NODE_ENV === 'development' ? '3001' : '3000'}`)
+app.config.globalProperties.$socket = io(`http://10.200.10.23:${process.env.NODE_ENV === 'development' ? '3001' : '43434'}`)
 
 app.mount('#app')

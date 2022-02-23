@@ -1,13 +1,13 @@
 <template>
   <v-app style="height: 100%">
-    <v-bottom-navigation app>
-      <v-btn v-for="route in routes" @click="currentTab = route.name" size="x-large" :color="currentTab == route.name ? 'primary' : ''">
-        <v-icon :icon="route.icon"/>
+    <v-bottom-navigation app color="primary" v-model="tabValue" mandatory>
+      <v-btn v-for="route in routes" @click="currentTab = route.name">
+        <v-icon size="x-large" :icon="route.icon"/>
       </v-btn>
     </v-bottom-navigation>
     <v-main fluid style="max-height: 100%">
       <keep-alive>
-        <component :is="currentTab"></component>
+        <component :is="currentTab" :key="currentTab"></component>
       </keep-alive>
     </v-main>
   </v-app>
@@ -52,6 +52,11 @@ export default {
   watch: {
     currentTab(tab){
       localStorage.setItem('currentTab', tab)
+    }
+  },
+  computed: {
+    tabValue(){
+      return this.routes.findIndex(route => route.name == this.currentTab)
     }
   }
 }
