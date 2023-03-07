@@ -9,7 +9,8 @@ export default io => {
   const wemo = new Wemo({
     discover_opts: {
       explicitSocketBind: true,
-    }
+    },
+    listen_interface: 'eno1'
   })
   
   //sync devices loaded onto server with devices stored on file
@@ -99,7 +100,7 @@ export default io => {
           const state = {
             name: device.device.friendlyName,
             serialNumber,
-            state: res.BinaryState
+            state: res
           }
           if(res.brightness)
             state.brightness = parseInt(res.brightness)
@@ -115,7 +116,7 @@ export default io => {
       io.emit('stateChange', {serialNumber: serialNumber, state: 2})
       let device = devices[serialNumber]
       if(device)
-        device.getBinaryState().then(({BinaryState}) =>{
+        device.getBinaryState().then((BinaryState) =>{
           device.setBinaryState(BinaryState == 1 ? 0 : 1).then(result =>{
             callback(result)
           }).catch(callback)
