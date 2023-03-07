@@ -279,7 +279,7 @@ export default {
 .slide-leave-active,
 .slideback-enter-active,
 .slideback-leave-active {
-  transition: 1.25s;
+  transition: .25s;
 }
 
 .div-slider {
