@@ -1,4 +1,6 @@
 {
+  "name": "home-management-server",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "start": "node -r dotenv-flow/config server.js",
