@@ -27,7 +27,7 @@ app.use(express.static('../dist'))
 
 //serves static files in dist
 app.get(/.*/, (req, res) => {
-  res.sendFile(process.env.DIST_PATH??path.join(path.resolve(), '../dist/index.html'))
+  res.sendFile(path.join(process.env.DIST_PATH??path.join(path.resolve(), '../dist'), 'index.html'))
 })
 
 //web socket
