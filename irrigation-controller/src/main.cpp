@@ -2,6 +2,8 @@
 #include <ArduinoOTA.h>
 #include <ETH.h>
 
+#include "config.h"
+#include "esp_time_helpers.h"
 #include "irrigation.h"
 #include "logging.h"
 #include "secrets.h"
@@ -20,7 +22,7 @@ static portMUX_TYPE spinlock = portMUX_INITIALIZER_UNLOCKED;
 // globals for ethernet connection
 static bool eth_connected = false;
 static bool wifi_connected = false;
-String mac = "de:ad:be:ef:fe:ed";
+char mac[18] = "de:ad:be:ef:fe:ed";
 IPAddress local_ip(IP_ADDR);
 IPAddress gateway(10, 200, 10, 1);
 IPAddress subnet(255, 255, 255, 0);
@@ -33,18 +35,20 @@ IPAddress dns2(1, 1, 1, 1);
 TaskHandle_t irrigationControlTask;
 
 void setup() {
-  Serial.begin(115200);
-  debug_printf("Starting setup\n");
+  // set mac address
+  uint8_t mac_raw[6];
+  esp_read_mac(mac_raw, ESP_MAC_WIFI_STA);
+  sprintf(mac, "%02X:%02X:%02X:%02X:%02X:%02X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+
+  init_logging();
+  logger_printf("Starting setup\n");
   // start ethernet
   WiFi.setHostname(HOSTNAME);
   WiFi.onEvent(ArduinoEvent);
-  // if(!ETH.begin())
+  ETH.begin();
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-  // Print ESP Local IP Address
 
-  configTime(5 * 3600, 0, "pool.ntp.org");
-  
-  init_relay(); 
+  init_relay();
 
   xTaskCreate(vTaskIrrigationControl, "IrrigationControl", 10000, NULL, 1, &irrigationControlTask);
   xTaskCreate(vTaskUpdater, "OTA", 10000, NULL, 5, NULL);
@@ -59,44 +63,43 @@ void ArduinoEvent(arduino_event_id_t event) {
   switch (event) {
   // for ethernet
   case ARDUINO_EVENT_ETH_START:
-    debug_printf("ETH Started\n");
+    logger_printf("ETH Started\n");
     ETH.setHostname(HOSTNAME);
-    ETH.config(local_ip, gateway, subnet, dns1, dns2);
     break;
   case ARDUINO_EVENT_ETH_CONNECTED:
-    debug_printf("ETH Connected\n");
+    logger_printf("ETH Connected\n");
     break;
   case ARDUINO_EVENT_ETH_GOT_IP:
-    mac = ETH.macAddress();
     eth_connected = true;
     ArduinoOTA.begin();
+    initTime("EST5EDT,M3.2.0,M11.1.0");
     break;
   case ARDUINO_EVENT_ETH_DISCONNECTED:
-    debug_printf("ETH Disconnected\n");
+    logger_printf("ETH Disconnected\n");
     eth_connected = false;
     break;
   case ARDUINO_EVENT_ETH_STOP:
-    debug_printf("ETH Stopped\n");
+    logger_printf("ETH Stopped\n");
     eth_connected = false;
     break;
   // for wifi
   case SYSTEM_EVENT_STA_START:
-    debug_printf("WiFi Started\n");
+    logger_printf("WiFi Started\n");
     break;
   case SYSTEM_EVENT_STA_CONNECTED:
-    debug_printf("WiFi Connected\n");
+    logger_printf("WiFi Connected\n");
     break;
   case SYSTEM_EVENT_STA_GOT_IP:
-    debug_printf("WiFi Got IP: %s\n", WiFi.localIP().toString().c_str());
-    mac = WiFi.macAddress();
+    logger_printf("WiFi Got IP: %s\n", WiFi.localIP().toString().c_str());
     wifi_connected = true;
     ArduinoOTA.begin();
+    initTime("EST5EDT,M3.2.0,M11.1.0");
     break;
   case SYSTEM_EVENT_STA_DISCONNECTED:
-    debug_printf("WiFi Disconnected\n");
+    logger_printf("WiFi Disconnected\n");
     break;
   case SYSTEM_EVENT_STA_STOP:
-    debug_printf("WiFi Stopped\n");
+    logger_printf("WiFi Stopped\n");
     break;
   default:
     break;
@@ -105,10 +108,10 @@ void ArduinoEvent(arduino_event_id_t event) {
 
 // check for updates at 4 hz
 void vTaskUpdater(void *pvParameters) {
-  debug_printf("Starting OTA\n");
+  logger_printf("Starting OTA\n");
   ArduinoOTA
       .onStart([]() {
-        debug_printf("Recieved updated request");
+        logger_printf("Recieved updated request");
         ws.enable(false);
         // Advertise connected clients what's going on'
         ws.textAll("OTA Update Started");
@@ -123,28 +126,28 @@ void vTaskUpdater(void *pvParameters) {
         else // U_SPIFFS
           type = "filesystem";
         // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
-        debug_printf("Starting %s update\n", type);
+        logger_printf("Starting %s update\n", type);
       })
       .onEnd([]() {
-        debug_printf("\nOTA complete\nStack usage by ota: %d bytes\nStack usage by motor control: %d bytes",
-                     uxTaskGetStackHighWaterMark(xTaskGetHandle("OTA")),
-                     uxTaskGetStackHighWaterMark(xTaskGetHandle("MotorControl")));
+        logger_printf("\nOTA complete\nStack usage by ota: %d bytes\nStack usage by motor control: %d bytes",
+                      uxTaskGetStackHighWaterMark(xTaskGetHandle("OTA")),
+                      uxTaskGetStackHighWaterMark(xTaskGetHandle("MotorControl")));
       })
       .onProgress([](unsigned int progress, unsigned int total) {
-        debug_printf("Progress: %u%%\r", (progress / (total / 100)));
+        logger_printf("Progress: %u%%\r", (progress / (total / 100)));
       })
       .onError([](ota_error_t error) {
-        debug_printf("Error[%u]: ", error);
+        logger_printf("Error[%u]: ", error);
         if (error == OTA_AUTH_ERROR)
-          debug_printf("Auth Failed\n");
+          logger_printf("Auth Failed\n");
         else if (error == OTA_BEGIN_ERROR)
-          debug_printf("Begin Failed\n");
+          logger_printf("Begin Failed\n");
         else if (error == OTA_CONNECT_ERROR)
-          debug_printf("Connect Failed\n");
+          logger_printf("Connect Failed\n");
         else if (error == OTA_RECEIVE_ERROR)
-          debug_printf("Receive Failed\n");
+          logger_printf("Receive Failed\n");
         else if (error == OTA_END_ERROR)
-          debug_printf("End Failed\n");
+          logger_printf("End Failed\n");
       });
   TickType_t xLastWakeTime;
   const TickType_t xFrequency = 250 / portTICK_PERIOD_MS;

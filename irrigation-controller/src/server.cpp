@@ -33,6 +33,11 @@ void start_server(){
     serializeJson(makeDoc(), *response);
     request->send(response);
   });
+  server.on("/config", HTTP_GET, [](AsyncWebServerRequest *request) {
+    AsyncResponseStream *response = request->beginResponseStream("application/json");
+    serializeJson(config.toJson(), *response);
+    request->send(response);
+  });
   server.on("^\\/api\\/relay\\/([0-9]+)\\/(on|off)$", HTTP_GET, [](AsyncWebServerRequest *request) {
     int relayNum = request->pathArg(0).toInt();
     bool relayAction = request->pathArg(1).equals("on");
@@ -53,6 +58,7 @@ void start_server(){
 }
 
 bool stop_server() {
+  return true;
 }
 
 void onWSEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data,

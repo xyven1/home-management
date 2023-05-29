@@ -1,6 +1,11 @@
 #include "logging.h"
 
-int debug_printf(const char *format, ...) {
+void init_logging() {
+  Serial.begin(115200);
+  Serial.println("Logging started");
+}
+
+int logger_printf(const char *format, ...) {
   char loc_buf[64];
   char *temp = loc_buf;
   va_list arg;
@@ -25,5 +30,19 @@ int debug_printf(const char *format, ...) {
   auto rLen = Serial.write((uint8_t *)temp, len);
   if (temp != loc_buf)
     free(temp);
+  return rLen;
+}
+
+int log_time(struct tm *timeinfo, const char *format) {
+  const char *f = format;
+  if (!f) {
+    f = "%c";
+  }
+  char buf[64];
+  size_t written = strftime(buf, 64, f, timeinfo);
+  if (written == 0) {
+    return written;
+  }
+  auto rLen = Serial.write(buf);
   return rLen;
 }
