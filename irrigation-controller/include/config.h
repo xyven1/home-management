@@ -6,34 +6,30 @@
 #include <vector>
 
 typedef uint valve_id_t;
-class Valve {
-public:
-  const valve_id_t id;
-  const char mac[18];
+typedef struct {
+  valve_id_t id;
+  char mac[18];
   int relay;
   const char *name;
-};
+} valve_t;
 
-class Job {
-public:
+typedef struct {
   const char *name;
   int duration;
   std::vector<valve_id_t> valveIDs;
-};
+} job_t;
 
 typedef uint sequence_id_t;
-class Sequence {
-public:
-  const sequence_id_t id;
+typedef struct {
+  sequence_id_t id;
   const char *name;
-  std::vector<Job> jobs;
-};
+  std::vector<job_t> jobs;
+} sequence_t;
 
 typedef uint event_id_t;
 typedef uint event_priority_t;
-class Event {
-public:
-  const event_id_t id;
+typedef struct  {
+  event_id_t id;
   const char *name;
   event_priority_t priority;
   sequence_id_t sequenceID;
@@ -42,26 +38,24 @@ public:
   time_t start;
   time_t end;
 
-  std::optional<Job> getCurrentJob(time_t now);
-};
+  std::optional<job_t> getCurrentJob(time_t now);
+} irrigation_event_t;
 
 class Config {
 public:
-  std::vector<Valve> valves;
-  std::vector<Sequence> sequences;
-  std::vector<Event> events;
-  char *timezone;
+  std::vector<valve_t> Valves;
+  std::vector<sequence_t> Sequences;
+  std::vector<irrigation_event_t> Events;
+  const char *Timezone;
 
-  Valve* get_valve(valve_id_t id);
-  Sequence* get_sequence(sequence_id_t id);
-  Event* get_event(event_id_t id);
+  valve_t* getValve(valve_id_t id);
+  sequence_t* getSequence(sequence_id_t id);
+  irrigation_event_t* getEvent(event_id_t id);
   DynamicJsonDocument toJson();
+  bool fromJson(JsonVariant &json);
 };
 
 extern Config config;
 extern char mac[18];
-
-bool load_config();
-bool save_config();
 
 #endif

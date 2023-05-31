@@ -21,9 +21,9 @@ void vTaskIrrigationControl(void *pvParameters) {
     if(now == 0)
       continue;
     // keep track of the relays state
-    std::vector<bool> valve_state(config.valves.size(), false);
-    for (auto &event : config.events) {
-      auto sequence = config.get_sequence(event.sequenceID);
+    std::vector<bool> valve_state(config.Valves.size(), false);
+    for (auto &event : config.Events) {
+      auto sequence = config.getSequence(event.sequenceID);
       if (sequence == nullptr)
         continue;
       auto job_opt = event.getCurrentJob(now);
@@ -33,14 +33,14 @@ void vTaskIrrigationControl(void *pvParameters) {
       if(job.valveIDs.size() == 0)
         continue;
       for (auto &valveID : job.valveIDs) {
-        auto valve = config.get_valve(valveID);
+        auto valve = config.getValve(valveID);
         if (valve == nullptr)
           continue;
         valve_state[valve->relay] = true;
       }
     }
     for (int i = 0; i < valve_state.size(); i++) {
-      auto valve = config.get_valve(i);
+      auto valve = config.getValve(i);
       if (valve == nullptr || mac != valve->mac)
         continue;
       if(valve_state[i])
