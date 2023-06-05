@@ -70,6 +70,12 @@ export default io => {
     })
   }
   
+  // init devices file
+  fs.mkdir(upath.join(dataPath), {recursive: true}, (err)=>{
+    if(err) console.error(err)
+    fs.writeFile(upath.join(dataPath, 'devices.json'), JSON.stringify([],null, 2), (err)=>{if(err) console.error(err)})
+  })
+
   //load all stored devices
   loadDevices()
   
