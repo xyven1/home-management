@@ -18,6 +18,7 @@
     "dotenv-flow": "^3.2.0",
     "express": "^4.17.2",
     "socket.io": "^4.4.1",
+    "upath": "^2.0.1",
     "wemo-client": "github:xyven1/wemo-client#patch-1"
   },
   "devDependencies": {

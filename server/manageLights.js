@@ -1,6 +1,9 @@
 import fs from 'fs'
+import upath from 'upath'
 import Wemo from 'wemo-client'
 import debounce from "debounce"
+
+const dataPath = process.platform === "win32" ? "C:/ProgramData/home-management/" : "/var/cache/home-management/"
 
 export default io => {
   var devices = {}
@@ -15,7 +18,7 @@ export default io => {
   
   //sync devices loaded onto server with devices stored on file
   const sync = debounce(()=>{
-    fs.readFile('./devices.json', (err,data)=>{
+    fs.readFile(upath.join(dataPath, 'devices.json'), (err,data)=>{
       var parsed = JSON.parse(data)
       for (const [, client] of Object.entries(devices)) {
         let sw = parsed.find(sw=>sw.serialNumber==client.device.serialNumber)
@@ -23,7 +26,7 @@ export default io => {
         if(sw) sw = device
         else parsed.push(device)
       }
-      fs.writeFile('./devices.json', JSON.stringify(parsed,null, 2), (err)=>{if(err) console.error(err)})
+      fs.writeFile(upath.join(dataPath, 'devices.json'), JSON.stringify(parsed,null, 2), (err)=>{if(err) console.error(err)})
     })
   }, 1000)
   
@@ -54,7 +57,7 @@ export default io => {
   
   //loads devices from devices.json
   function loadDevices(){
-    fs.readFile('./devices.json', (err,data)=>{
+    fs.readFile(upath.join(dataPath, 'devices.json'), (err,data)=>{
       var parsed = JSON.parse(data)
       parsed.forEach(sw => {
         wemo.load(`http://${sw.ip}:${sw.port}/setup.xml`).then(deviceInfo=>{
