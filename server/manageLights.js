@@ -4,9 +4,24 @@ import Wemo from 'wemo-client'
 import debounce from "debounce"
 
 const dataPath = process.platform === "win32" ? "C:/ProgramData/home-management/" : "/var/cache/home-management/"
+const configPath = process.platform === "win32" ? "C:/ProgramFiles/home-management/" : "/etc/home-management/"
 
 export default io => {
-  var devices = {}
+  const devicesPath = upath.join(dataPath, 'devices.json')
+  const svgPath = upath.join(configPath, 'svg.json')
+
+  // init devices file
+  if (!fs.existsSync(dataPath)) {
+    fs.mkdirSync(upath.join(dataPath), { recursive: true })
+    fs.writeFileSync(devicesPath, JSON.stringify([]))
+  }
+  // init svg file
+  if (!fs.existsSync(configPath)) {
+    fs.mkdirSync(upath.join(configPath), { recursive: true })
+    fs.writeFileSync(svgPath, JSON.stringify([]))
+  }
+
+  const devices = {}
 
   //configs
   const wemo = new Wemo({
@@ -18,7 +33,7 @@ export default io => {
 
   //sync devices loaded onto server with devices stored on file
   const sync = debounce(() => {
-    fs.readFile(upath.join(dataPath, 'devices.json'), (err, data) => {
+    fs.readFile(devicesPath, (err, data) => {
       var parsed = JSON.parse(data)
       for (const [, client] of Object.entries(devices)) {
         let sw = parsed.find(sw => sw.serialNumber == client.device.serialNumber)
@@ -26,7 +41,7 @@ export default io => {
         if (sw) sw = device
         else parsed.push(device)
       }
-      fs.writeFile(upath.join(dataPath, 'devices.json'), JSON.stringify(parsed, null, 2), (err) => { if (err) console.error(err) })
+      fs.writeFile(devicesPath, JSON.stringify(parsed, null, 2), (err) => { if (err) console.error(err) })
     })
   }, 1000)
 
@@ -58,9 +73,11 @@ export default io => {
 
   //loads devices from devices.json
   function loadDevices() {
-    fs.readFile(upath.join(dataPath, 'devices.json'), (err, data) => {
+    console.log('Loading Devices..');
+    fs.readFile(devicesPath, (err, data) => {
       if (err) return console.error(err)
       var parsed = JSON.parse(data)
+      console.log(`Loading ${parsed.length} devices`)
       parsed.forEach(sw => {
         wemo.load(`http://${sw.ip}:${sw.port}/setup.xml`).then(deviceInfo => {
           console.log('Loaded Device: %j', deviceInfo.friendlyName)
@@ -71,10 +88,6 @@ export default io => {
       })
     })
   }
-
-  // init devices file
-  fs.mkdirSync(upath.join(dataPath), { recursive: true })
-  fs.writeFileSync(upath.join(dataPath, 'devices.json'), JSON.stringify([]))
 
   //load all stored devices
   loadDevices()
@@ -95,14 +108,14 @@ export default io => {
     //returns parsed array containing data for svg, containing associations between map regions and serial number of switch
     socket.on('getSvg', (callback = () => { }) => {
       console.log('getting svg')
-      fs.readFile('./svg.json', (err, data) => {
+      fs.readFile(svgPath, (err, data) => {
         callback(JSON.parse(data))
       })
     })
 
     //returns the state of a switch given a serial number
     const getSwitch = (serialNumber, callback = () => { }) => {
-      console.log('getting switch state:', serialNumber)
+      // console.log('getting switch state:', serialNumber)
       let device = devices[serialNumber]
       if (device)
         device.getBinaryState().then(res => {
@@ -169,10 +182,10 @@ export default io => {
     //allows client to change serial number associated to a region
     socket.on('setSvg', (data, callback = () => { }) => {
       console.log('setting svg')
-      fs.readFile('./svg.json', (err, fileData) => {
+      fs.readFile(svgPath, (err, fileData) => {
         var parsed = JSON.parse(fileData)
         parsed.flatMap(r => r.regions).find(r => r.d == data.d).sn = data.sn
-        fs.writeFile('./svg.json', JSON.stringify(parsed, null, 2), (err) => {
+        fs.writeFile(svgPath, JSON.stringify(parsed, null, 2), (err) => {
           if (err) console.error(err)
           getSwitch(data.sn, callback)
         })

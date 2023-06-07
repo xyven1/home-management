@@ -10,6 +10,12 @@ import manageTV from './manageTV.js'
 import manageLights from './manageLights.js'
 import manageAudio from './manageAudio.js'
 
+// catch uncaught exceptions
+process.on('uncaughtException', (err) => {
+  console.error(err, "Uncaught Exception Thrown")
+  process.exit(1) //mandatory (as per the Node.js docs)
+})
+
 const app = express()
 const server = http.createServer(app)
 
