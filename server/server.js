@@ -13,6 +13,7 @@ import manageAudio from './manageAudio.js'
 // catch uncaught exceptions
 process.on('uncaughtException', (err) => {
   console.error(err, "Uncaught Exception Thrown")
+  console.trace("Uncaught Exception Thrown")
   process.exit(1) //mandatory (as per the Node.js docs)
 })
 
