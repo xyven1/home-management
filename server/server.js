@@ -57,4 +57,4 @@ manageLights(io)
 manageAudio(io)
 
 //manage tv
-manageTV.start()
+// manageTV.start()

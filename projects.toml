@@ -10,7 +10,7 @@
 
 [home-management]
 name = "home-management"
-relPath = ""
+relPath = "oldui"
 subsystem = "nodejs"
 translator = "package-lock"
 translators = [ "package-lock", "package-json",]
