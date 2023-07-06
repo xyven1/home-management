@@ -30,11 +30,11 @@ const io = new Server(server, {
 //middleware
 app.use(cors())
 app.use(compression())
-app.use(express.static(process.env.DIST_PATH??'../dist'))
+app.use(express.static(process.env.DIST_PATH ?? '../oldui/dist'))
 
 //serves static files in dist
 app.get(/.*/, (req, res) => {
-  res.sendFile(path.join(process.env.DIST_PATH??path.join(path.resolve(), '../dist'), 'index.html'))
+  res.sendFile(path.join(process.env.DIST_PATH ?? path.join(path.resolve(), '../oldui/dist'), 'index.html'))
 })
 
 //web socket
