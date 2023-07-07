@@ -55,7 +55,7 @@
 <script lang="ts" setup>
 import { ref } from "vue";
 import { useAppStore } from "@/store/app";
-import { Svg, Region, Switch } from "@/socketSchema";
+import { Svg, Region, Switch } from "@/../../types/socket";
 import ThemeToggle from "@/components/ThemeToggle.vue";
 const layer = ref(0);
 const selecting = ref(false);

@@ -1,4 +1,7 @@
-import { ClientToServerEvents, ServerToClientEvents } from "@/socketSchema";
+import {
+  ClientToServerEvents,
+  ServerToClientEvents,
+} from "@/../../types/socket.js";
 import { defineStore } from "pinia";
 import { Socket, io } from "socket.io-client";
 
