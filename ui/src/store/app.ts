@@ -1,7 +1,7 @@
 import {
   ClientToServerEvents,
   ServerToClientEvents,
-} from "@/../../types/socket.js";
+} from "@/types/socket.js";
 import { defineStore } from "pinia";
 import { Socket, io } from "socket.io-client";
 
@@ -10,9 +10,13 @@ interface AppStore {
 }
 
 export const useAppStore = defineStore("app", (): AppStore => {
-  // const prodEndpoint =
-  //   import.meta.env.SERVER_IP + ":" + import.meta.env.SERVER_PORT;
-  const socket = io(`http://${import.meta.env.DEV ? "localhost:3001" : ""}`);
+  const socket = io(
+    `http://${
+      import.meta.env.DEV
+        ? "localhost:3001"
+        : import.meta.env.SERVER_IP + ":" + import.meta.env.SERVER_PORT
+    }`
+  );
   return {
     socket,
   };
