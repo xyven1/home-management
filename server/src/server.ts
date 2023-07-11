@@ -30,13 +30,13 @@ const io: AppServer = new Server(server, {
 // middleware
 app.use(cors());
 app.use(compression());
-app.use(express.static(process.env.DIST_PATH ?? "../ui/dist"));
+app.use(express.static(process.env.DIST_PATH ?? "../../ui/dist"));
 
 // serves static files in dist
 app.get(/.*/, (req, res) => {
   res.sendFile(
     path.join(
-      process.env.DIST_PATH ?? path.join(path.resolve(), "../ui/dist"),
+      process.env.DIST_PATH ?? path.join(path.resolve(), "../../ui/dist"),
       "index.html"
     )
   );
