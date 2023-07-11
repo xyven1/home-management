@@ -19,6 +19,8 @@ process.on("uncaughtException", (err) => {
 
 const app = express();
 const server = http.createServer(app);
+const defaultDistPath =
+  "../home-management/node_modules/@home-management/ui/dist/";
 
 const io: AppServer = new Server(server, {
   cors: {
@@ -30,13 +32,13 @@ const io: AppServer = new Server(server, {
 // middleware
 app.use(cors());
 app.use(compression());
-app.use(express.static(process.env.DIST_PATH ?? "../../ui/dist"));
+app.use(express.static(process.env.DIST_PATH ?? defaultDistPath));
 
 // serves static files in dist
 app.get(/.*/, (req, res) => {
   res.sendFile(
     path.join(
-      process.env.DIST_PATH ?? path.join(path.resolve(), "../../ui/dist"),
+      process.env.DIST_PATH ?? path.join(path.resolve(), defaultDistPath),
       "index.html"
     )
   );
