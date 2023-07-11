@@ -19,7 +19,7 @@ export const useAppStore = defineStore(
       `http://${
         import.meta.env.DEV
           ? "localhost:3001"
-          : import.meta.env.SERVER_IP + ":" + import.meta.env.SERVER_PORT
+          : "10.200.10.4:43434"
       }`,
     );
     const theme = useTheme();
