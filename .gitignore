@@ -2,3 +2,4 @@
 .vscode
 result
 node_modules
+*.code-workspace
