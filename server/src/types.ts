@@ -2,7 +2,7 @@ import { type Server } from "socket.io";
 import {
   type ClientToServerEvents,
   type ServerToClientEvents,
-} from "./socket.js";
+} from "@home-management/lib/types/socket.js";
 export type DeviceInfo = any;
 
 export type AppServer = Server<

@@ -1,0 +1,16 @@
+{
+  "name": "home-management",
+  "version": "0.0.0",
+  "prefix": "./",
+  "workspaces": [
+    "server",
+    "lib",
+    "ui"
+  ],
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "author": "xyven1",
+  "license": "MIT"
+}

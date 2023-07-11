@@ -6,22 +6,14 @@
       config.projectRoot = ./.;
       source = ./.;
       projects = {
-        server = {
-          name = "server";
-          relPath = "server";
+        home-management = {
+          name = "home-management";
+          relPath = "";
           subsystem = "nodejs";
           translator = "package-lock";
           subsystemInfo = {
             nodejs = 18;
-          };
-        };
-        ui = {
-          name = "ui";
-          relPath = "ui";
-          subsystem = "nodejs";
-          translator = "package-lock";
-          subsystemInfo = {
-            nodejs = 18;
+            workspaces = [ "server" "lib" "ui" ];
           };
         };
       };

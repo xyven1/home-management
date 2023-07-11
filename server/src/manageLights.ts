@@ -9,7 +9,7 @@ import {
   type Switch,
   type WsResponse,
   type DeviceState,
-} from "./socket.js";
+} from "@home-management/lib/types/socket.js";
 import type { AppServer, DeviceInfo } from "./types.js";
 import type WemoClient from "wemo-client/lib/client.js";
 

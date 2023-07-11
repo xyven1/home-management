@@ -1,5 +1,5 @@
 {
-  "name": "ui",
+  "name": "@home-management/ui",
   "version": "0.0.0",
   "private": true,
   "scripts": {
@@ -10,6 +10,7 @@
     "pretty": "prettier --write \"./**/*.{js,jsx,ts,tsx,json,vue}\""
   },
   "dependencies": {
+    "@home-management/lib": "^0.0.0",
     "@mdi/font": "7.0.96",
     "core-js": "^3.29.0",
     "pinia": "^2.0.0",
@@ -34,5 +35,7 @@
     "vite": "^4.2.0",
     "vite-plugin-vuetify": "^1.0.0",
     "vue-tsc": "^1.2.0"
-  }
+  },
+  "author": "xyven1",
+  "license": " MIT"
 }

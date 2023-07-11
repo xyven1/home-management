@@ -1,0 +1,14 @@
+{
+  "name": "@home-management/lib",
+  "version": "0.0.0",
+  "description": "Lib for home management",
+  "author": "xyven1",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.1.6"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}

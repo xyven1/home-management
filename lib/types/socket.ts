@@ -46,25 +46,25 @@ export interface ClientToServerEvents {
   getSwitches: (wsCallback: (switches: Switch[]) => void) => void;
   getSwitch: (
     sn: SerialNumber,
-    wsCallback: (sw: WsResponse<Switch>) => void,
+    wsCallback: (sw: WsResponse<Switch>) => void
   ) => void;
   toggleSwitch: (
     sn: SerialNumber,
-    wsCallback: (res: WsResponse<DeviceState>) => void,
+    wsCallback: (res: WsResponse<DeviceState>) => void
   ) => void;
   setSwitch: (
     sn: SerialNumber,
     state: number,
-    wsCallback: (res: WsResponse<DeviceState>) => void,
+    wsCallback: (res: WsResponse<DeviceState>) => void
   ) => void;
   setBrightness: (
     sn: SerialNumber,
     brightness: number,
-    wsCallback: (res: WsResponse<DeviceState>) => void,
+    wsCallback: (res: WsResponse<DeviceState>) => void
   ) => void;
   setAllSwitches: (
     state: number,
-    wsCallback: (res: WsResponse<DeviceState[]>) => void,
+    wsCallback: (res: WsResponse<DeviceState[]>) => void
   ) => void;
   // for svg
   setSvg: (region: Region, wsCallback: (res: boolean) => void) => void;
