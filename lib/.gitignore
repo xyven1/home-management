@@ -1,0 +1,6 @@
+dist
+tsconfig.tsbuildinfo
+# Ignore compiled code
+types/**/*
+!types/**/*.ts
+types/**/*.d.ts

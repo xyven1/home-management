@@ -7,43 +7,25 @@
       <ThemeToggle />
     </VAppBarNavIcon>
   </VAppBar>
-  <VCarousel
-    :items-to-show="1"
-    v-model="layer"
-    class="carousel"
-    show-arrows
-    hide-delimiter-background
-  >
+  <VCarousel :items-to-show="1" v-model="layer" class="carousel" show-arrows hide-delimiter-background>
     <VCarouselItem v-for="layer in svg" :key="layer.name">
-      <svg viewBox="0 0 295 515">
-        <image
-          v-if="layer.background !== undefined"
-          width="295"
-          height="515"
-          x="0"
-          y="0"
-          :href="backgroundHREF(layer.background.name)"
-        />
-        <path
-          v-for="(region, index) in layer.regions"
-          :key="index"
-          :d="region.d"
-          @click="toggle(region.sn, region.sw)"
-          style="cursor: pointer; stroke: transparent"
-          :style="{
+      <svg viewBox="0 0 295 515" width="100%">
+        <image v-if="layer.background !== undefined" width="295" height="515" x="0" y="0"
+          :href="backgroundHREF(layer.background.name)" />
+        <path v-for="(region, index) in layer.regions" :key="index" :d="region.d" @click="toggle(region.sn, region.sw)"
+          style="cursor: pointer; stroke: transparent" :style="{
             fill: selecting
               ? region.sn
                 ? '#FC8C00'
                 : 'rgb(var(--v-theme-secondary))'
               : {
-                  0: '#DDDDDD',
-                  1: 'rgb(var(--v-theme-tertiary))',
-                  2: 'rgb(var(--v-theme-info))',
-                  Error: 'rgb(var(--v-theme-error))',
-                }[region.sw?.state ?? 0] || 'rgb(var(--v-theme-secondary))',
+                0: '#DDDDDD',
+                1: 'rgb(var(--v-theme-tertiary))',
+                2: 'rgb(var(--v-theme-info))',
+                Error: 'rgb(var(--v-theme-error))',
+              }[region.sw?.state ?? 0] || 'rgb(var(--v-theme-secondary))',
             'stroke-width': region.stroke ?? 0,
-          }"
-        >
+          }">
           <title>
             {{ region.title }}
           </title>
@@ -57,7 +39,10 @@ import { ref } from "vue";
 import { useAppStore } from "@/store/app";
 import { Svg, Region, Switch } from "@home-management/lib/types/socket";
 import ThemeToggle from "@/components/ThemeToggle.vue";
-const layer = ref(0);
+import { storeToRefs } from "pinia";
+import { useLightsStore } from "@/store/lights";
+const { layer } = storeToRefs(useLightsStore());
+
 const selecting = ref(false);
 const { socket } = useAppStore();
 const svg = ref<Svg | null>(null);
@@ -100,7 +85,7 @@ socket.emit("getSvg", (res: Svg) => {
   svg {
     touch-action: none;
     height: 100%;
-    max-width: 100% !important;
+    width: 100% !important;
   }
 }
 </style>

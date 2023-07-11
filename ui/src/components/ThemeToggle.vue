@@ -7,17 +7,8 @@
   />
 </template>
 <script lang="ts" setup>
-import { computed } from "vue";
-import { useTheme } from "vuetify";
+import { useAppStore } from "@/store/app";
+import { storeToRefs } from "pinia";
 
-const theme = useTheme();
-
-const darkMode = computed({
-  get() {
-    return theme.global.name.value === "dark";
-  },
-  set(value) {
-    theme.global.name.value = value ? "dark" : "light";
-  },
-});
+const { darkMode } = storeToRefs(useAppStore());
 </script>

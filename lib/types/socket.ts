@@ -36,12 +36,19 @@ export interface DeviceState {
 
 export type WsResponse<T> = { ok: true; value: T } | { ok: false; err: string };
 
+export enum TVPosition {
+  Up,
+  Down,
+}
+
 export interface ClientToServerEvents {
   // for audio
   getAudioInput: (wsCallback: (input: string) => void) => void;
   changeInput: (input: string, wsCallback: (res: string) => void) => void;
   getAudioVolume: (wsCallback: (volume: number) => void) => void;
   changeVolume: (volume: number, wsCallback: (res: string) => void) => void;
+  // for tv
+  setTVPosition: (position: TVPosition, wsCallback: () => void) => void;
   // for lights
   getSwitches: (wsCallback: (switches: Switch[]) => void) => void;
   getSwitch: (

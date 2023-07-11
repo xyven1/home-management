@@ -4,6 +4,10 @@
   "description": "Lib for home management",
   "author": "xyven1",
   "license": "MIT",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w"
+  },
   "devDependencies": {
     "typescript": "^5.1.6"
   },

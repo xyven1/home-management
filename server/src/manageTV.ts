@@ -1,4 +1,6 @@
 import axios, { AxiosError } from "axios";
+import { AppServer } from "./types.js";
+import { TVPosition } from "@home-management/lib/types/socket.js";
 
 enum TVState {
   On = 1,
@@ -48,7 +50,28 @@ async function stop(): Promise<void> {
   await task;
 }
 
-export default {
-  start,
-  stop,
+async function up(): Promise<void> {
+  await axios.post("http://10.200.10.35", "up");
+}
+
+async function down(): Promise<void> {
+  await axios.post("http://10.200.10.35", "down");
+}
+
+export { start, stop, up, down };
+
+export default (io: AppServer): void => {
+  io.on("connection", (socket) => {
+    socket.on("setTVPosition", async (position, wsCallback) => {
+      switch (position) {
+        case TVPosition.Up:
+          await up();
+          break;
+        case TVPosition.Down:
+          await down();
+          break;
+      }
+      wsCallback();
+    });
+  });
 };

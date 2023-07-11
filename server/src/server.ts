@@ -64,4 +64,4 @@ manageLights(io);
 manageAudio(io);
 
 // manage tv
-void manageTV.start();
+manageTV(io);

@@ -1,17 +1,17 @@
-import fs from "fs";
-import upath from "upath";
-import Wemo from "wemo-client";
-import debounce from "debounce";
 import {
   type Device,
+  type DeviceState,
   type SerialNumber,
   type Svg,
   type Switch,
   type WsResponse,
-  type DeviceState,
 } from "@home-management/lib/types/socket.js";
-import type { AppServer, DeviceInfo } from "./types.js";
+import debounce from "debounce";
+import fs from "fs";
+import upath from "upath";
+import Wemo from "wemo-client";
 import type WemoClient from "wemo-client/lib/client.js";
+import type { AppServer, DeviceInfo } from "./types.js";
 
 const dataPath =
   process.platform === "win32"
