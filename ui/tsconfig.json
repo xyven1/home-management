@@ -16,7 +16,9 @@
     "types": ["node", "vuetify"],
     "paths": {
       "@/*": ["src/*"]
-    }
+    },
+    "skipLibCheck": true,
+    "allowImportingTsExtensions": true
   },
   "include": [
     "src/**/*.ts",

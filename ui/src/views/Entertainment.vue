@@ -4,22 +4,10 @@
       <VCol style="max-width: 300px">
         <VCard title="TV Control" :loading="movingTV">
           <template v-slot:actions>
-            <VBtn
-              @click="setTVPosition(TVPosition.Up)"
-              color="primary"
-              variant="tonal"
-              class="flex-grow-1"
-              :disabled="movingTV"
-              >Up</VBtn
-            >
-            <VBtn
-              @click="setTVPosition(TVPosition.Down)"
-              color="primary"
-              variant="tonal"
-              class="flex-grow-1"
-              :disabled="movingTV"
-              >Down</VBtn
-            >
+            <VBtn @click="setTVPosition(TVPosition.Up)" color="primary" variant="tonal" class="flex-grow-1"
+              :disabled="movingTV">Up</VBtn>
+            <VBtn @click="setTVPosition(TVPosition.Down)" color="primary" variant="tonal" class="flex-grow-1"
+              :disabled="movingTV">Down</VBtn>
           </template>
         </VCard>
       </VCol>
@@ -29,9 +17,8 @@
 
 <script setup lang="ts">
 import { useAppStore } from "@/store/app";
-import { TVPosition } from "@home-management/lib/types/socket";
+import { TVPosition } from "@home-management/lib/types/socket.ts";
 import { ref } from "vue";
-import { VBtn } from "vuetify/lib/components/index.mjs";
 
 const { socket } = useAppStore();
 const movingTV = ref(false);

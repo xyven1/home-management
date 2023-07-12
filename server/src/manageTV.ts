@@ -1,5 +1,5 @@
 import axios, { AxiosError } from "axios";
-import { AppServer } from "./types.js";
+import { type AppServer } from "./types.js";
 import { TVPosition } from "@home-management/lib/types/socket.js";
 
 enum TVState {
