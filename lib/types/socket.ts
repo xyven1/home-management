@@ -81,5 +81,6 @@ export interface ClientToServerEvents {
 export interface ServerToClientEvents {
   // for audio
   // for lights
-  stateChange: (sw: Switch) => void;
+  stateChange: (sn: SerialNumber, state: number) => void;
+  brightnessChange: (sn: SerialNumber, brightness: number) => void;
 }

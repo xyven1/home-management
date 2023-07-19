@@ -83,11 +83,11 @@ export default (io: AppServer): void => {
 
     client.on("binaryState", (value) => {
       console.log("statechange", client.device.friendlyName, value);
-      io.emit("stateChange", {
-        name: client.device.friendlyName,
-        serialNumber: client.device.serialNumber,
-        state: Number(value),
-      });
+      io.emit("stateChange", client.device.serialNumber, Number(value));
+    });
+    client.on("brightness", (value) => {
+      console.log("brightnesschange", client.device.friendlyName, value);
+      io.emit("brightnessChange", client.device.serialNumber, +value);
     });
   }
 
@@ -103,31 +103,30 @@ export default (io: AppServer): void => {
   }
 
   // loads devices from devices.json
-  function loadDevices(): void {
+  async function loadDevices(): Promise<void> {
     console.log("Loading Devices..");
     try {
       const devices: Device[] = JSON.parse(
         fs.readFileSync(devicesPath).toString()
       );
       console.log(`Loading ${devices.length} devices`);
-      devices.forEach((sw) => {
-        wemo
-          .load(`http://${sw.ip}:${sw.port}/setup.xml`)
-          .then((deviceInfo) => {
-            console.log("Loaded Device: %j", deviceInfo.friendlyName);
-            manageClient(deviceInfo);
-          })
-          .catch((err) => {
-            console.error("Failed to load device: %s", err);
-          });
-      });
+
+      await Promise.allSettled(
+        devices.map(async (sw) => {
+          const deviceInfo = await wemo.load(
+            `http://${sw.ip}:${sw.port}/setup.xml`
+          );
+          console.log("Loaded Device: %j", deviceInfo.friendlyName);
+          manageClient(deviceInfo);
+        })
+      );
     } catch (err) {
       console.error(err);
     }
   }
 
   // load all stored devices
-  loadDevices();
+  loadDevices().catch(console.error);
 
   // repeated discover run every 10 seconds
   setInterval(discover, 10000);
@@ -158,117 +157,117 @@ export default (io: AppServer): void => {
     });
 
     // returns the state of a switch given a serial number
-    const getSwitch = (
+    const getSwitch = async (
       serialNumber: SerialNumber,
       wsCallback: (res: WsResponse<Switch>) => void = () => {}
-    ): void => {
+    ): Promise<void> => {
       // console.log('getting switch state:', serialNumber)
       const device = devices.get(serialNumber);
       if (device !== undefined)
-        device
-          .getBinaryState()
-          .then((res) => {
-            const sw = {
+        try {
+          const state = await device.getBinaryState();
+          wsCallback({
+            ok: true,
+            value: {
               name: device.device.friendlyName,
               serialNumber,
-              state: Number(res.BinaryState),
-              brightness:
-                res.brightness != null ? Number(res.brightness) : undefined,
-            };
-            wsCallback({ ok: true, value: sw });
-          })
-          .catch((err) => {
-            wsCallback({ ok: false, err });
+              state: Number(state.BinaryState),
+              brightness: Number(state.brightness),
+            },
           });
+        } catch (err: any) {
+          wsCallback({ ok: false, err: err.message ?? err });
+        }
       else wsCallback({ ok: false, err: "Device not found" });
     };
     socket.on("getSwitch", getSwitch);
 
     // allows client to toggle switches using serial number
-    socket.on("toggleSwitch", (serialNumber, wsCallback = () => {}) => {
+    socket.on("toggleSwitch", async (serialNumber, wsCallback = () => {}) => {
       console.log("Toggling switch with serial number: " + serialNumber);
-      io.emit("stateChange", { name: "", serialNumber, state: 2 });
+      // io.emit("stateChange", serialNumber, 2);
       const device = devices.get(serialNumber);
-      if (device !== undefined)
-        device
-          .getBinaryState()
-          .then((res) => {
-            device
-              .setBinaryState(+res.BinaryState === 1 ? 0 : 1)
-              .then((result) => {
-                wsCallback({ ok: true, value: result });
-              })
-              .catch((err) => ({ status: "error", err }));
-          })
-          .catch((err) => ({ status: "error", err }));
-      else wsCallback({ ok: false, err: "Device not found" });
+      if (device !== undefined) {
+        try {
+          const prevState = (await device.getBinaryState()).BinaryState;
+          const state = await device.setBinaryState(+prevState === 1 ? 0 : 1);
+          wsCallback({
+            ok: true,
+            value: {
+              BinaryState: Number(state.BinaryState),
+              brightness:
+                state.brightness === undefined ? +state.brightness : undefined,
+            },
+          });
+        } catch (err: any) {
+          wsCallback({ ok: false, err: err.message ?? err });
+        }
+      } else wsCallback({ ok: false, err: "Device not found" });
     });
 
     // allows client to set switch state using serial number
-    socket.on("setSwitch", (serialNumber, state, wsCallback = () => {}) => {
-      if (isNaN(state) || state < 0 || state > 1) {
-        wsCallback({ ok: false, err: "Requested state invalid" });
-        return;
-      }
-      console.log(
-        "Setting switch with serial number: " + serialNumber + " to state: ",
-        state
-      );
-      const device = devices.get(serialNumber);
-      if (device != null)
-        device
-          .setBinaryState(state)
-          .then((res) => {
-            wsCallback({ ok: true, value: res });
-          })
-          .catch((err) => {
-            wsCallback({ ok: false, err });
-          });
-      else wsCallback({ ok: false, err: "Device not found" });
-    });
-
-    // allows client to set brightness of a switch using serial number
     socket.on(
-      "setBrightness",
-      (
-        serialNumber,
-        brightness,
-        wsCallback: (
-          res: WsResponse<{ BinaryState: number; brightness?: number }>
-        ) => void = () => {}
-      ) => {
+      "setSwitch",
+      async (serialNumber, state, wsCallback = () => {}) => {
+        if (isNaN(state) || state < 0 || state > 1) {
+          wsCallback({ ok: false, err: "Requested state invalid" });
+          return;
+        }
+        console.log(
+          "Setting switch with serial number: " + serialNumber + " to state: ",
+          state
+        );
         const device = devices.get(serialNumber);
-        if (device != null)
-          device
-            .setBrightness(brightness)
-            .then((res) => {
-              wsCallback({ value: res, ok: true });
-            })
-            .catch((err) => {
-              wsCallback({ ok: false, err });
-            });
+        if (device !== undefined)
+          try {
+            wsCallback({ ok: true, value: await device.setBinaryState(state) });
+          } catch (err: any) {
+            wsCallback({ ok: false, err: err.message ?? err });
+          }
         else wsCallback({ ok: false, err: "Device not found" });
       }
     );
 
+    // allows client to set brightness of a switch using serial number
+    socket.on(
+      "setBrightness",
+      async (serialNumber, brightness, wsCallback = () => {}) => {
+        const device = devices.get(serialNumber);
+        if (device !== undefined) {
+          try {
+            wsCallback({
+              ok: true,
+              value: await device.setBrightness(brightness),
+            });
+          } catch (err: any) {
+            wsCallback({ ok: false, err: err.message ?? err });
+          }
+        } else wsCallback({ ok: false, err: "Device not found" });
+      }
+    );
+
     // allows client to turn on or off all switches
-    socket.on("setAllSwitches", (state, wsCallback = () => {}) => {
+    socket.on("setAllSwitches", async (state, wsCallback = () => {}) => {
       if (isNaN(state) || state < 0 || state > 1) {
         wsCallback({ ok: false, err: "Requested state invalid" });
         return;
       }
       console.log("Setting all switches to state: ", state);
-      Promise.all(
-        [...devices.values()].map(
-          async (d) => await (d.setBinaryState(state) as Promise<DeviceState>)
-        )
-      )
-        .then((res) => {
-          wsCallback({ ok: true, value: res });
-        })
-        .catch((err) => {
-          wsCallback({ ok: false, err });
+      try {
+        wsCallback({
+          ok: true,
+          value: (
+            await Promise.allSettled(
+              [...devices.values()].map(
+                async (d) =>
+                  await (d.setBinaryState(state) as Promise<DeviceState>)
+              )
+            )
+          ).flatMap((res) => (res.status === "fulfilled" ? [res.value] : [])),
         });
+      } catch (err: any) {
+        wsCallback({ ok: false, err: err.message ?? err });
+      }
     });
 
     // allows client to change serial number associated to a region
