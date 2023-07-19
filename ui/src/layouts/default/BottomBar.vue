@@ -8,5 +8,9 @@
       <v-icon>mdi-speaker</v-icon>
       Entertainment
     </v-btn>
+    <v-btn to="/settings">
+      <v-icon>mdi-cog</v-icon>
+      Settings
+    </v-btn>
   </v-bottom-navigation>
 </template>

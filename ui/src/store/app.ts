@@ -4,7 +4,7 @@ import {
 } from "@home-management/lib/types/socket";
 import { defineStore } from "pinia";
 import { Socket, io } from "socket.io-client";
-import { Ref, computed, ref, watch } from "vue";
+import { Ref, ref, watch } from "vue";
 import { useTheme } from "vuetify/lib/framework.mjs";
 
 interface AppStore {
@@ -16,7 +16,9 @@ export const useAppStore = defineStore(
   "app",
   (): AppStore => {
     const socket = io(
-      `http://${import.meta.env.DEV ? "localhost:3001" : "10.200.10.4:43434"}`,
+      `http://${
+        import.meta.env.DEV ? "10.200.10.42:3001" : "10.200.10.4:43434"
+      }`,
     );
     const theme = useTheme();
     const darkMode = ref(true);
