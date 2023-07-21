@@ -30,7 +30,7 @@
             <stop :offset="region.sw!.brightness! + '%'" stop-color="rgb(var(--v-theme-tertiary))" />
             <stop
               :offset="region.sw!.brightness! + '%'"
-              stop-color="color-mix(in oklab, rgb(var(--v-theme-surface-variant)), rgb(var(--v-theme-tertiary)))"
+              stop-color="color-mix(in oklab, rgb(var(--v-theme-surface-variant)), rgb(var(--v-theme-tertiary)) 25%)"
             />
           </linearGradient>
         </defs>
@@ -51,7 +51,7 @@
               }[region.sw?.state ?? 0] || 'rgb(var(--v-theme-secondary))'
             , 'stroke-width': region.stroke ?? 0,
           }" @click="toggle(region.sn, region.sw)"
-          @pointermove.passive.capture="openSliderPopUp($event, region.sw)"
+          @pointermove.passive.capture="handlePointerMove($event, region.sw)"
           @pointerup="closeSliderPopUp"
         >
           <title>
@@ -126,7 +126,7 @@ async function toggle(sn: string, sw?: Switch) {
   const res = await socket.emitWithAck("toggleSwitch", sn);
   if (res.ok) {
     sw.state = res.value.BinaryState;
-    sw.brightness = res.value.brightness??sw.brightness;
+    sw.brightness = res.value.brightness ?? sw.brightness;
   }
 }
 
@@ -157,7 +157,7 @@ socket.on("connect", () => {
 
 // Brightness slider
 const activeSwitch = ref<Switch | null>(null);
-const sliderLocation = ref<{x:number, y:number} | null>(null);
+const sliderLocation = ref<{ x: number, y: number } | null>(null);
 const sliderBrightness = ref(0);
 const sendingBrightness = ref(false);
 
@@ -180,22 +180,22 @@ function updateBrightness(event: PointerEvent): void {
   sliderBrightness.value = Math.round(Math.max(0, Math.min(100, Math.round(position * 100))));
 }
 
-function openSliderPopUp(event: PointerEvent, sw: Switch | undefined): void {
-  if (event.type !== "pointermove" || event.pressure <= 0 || sw === undefined || activeSwitch.value) return;
-  if (!sliderLocation.value) {
+function handlePointerMove(event: PointerEvent, sw: Switch | undefined): void {
+  if (event.type !== "pointermove" || event.pressure <= 0 || sw === undefined || !sw.brightness || isNaN(sw.brightness)) return;
+  if (activeSwitch.value) {
+    updateBrightness(event);
+  } else if (!sliderLocation.value) {
     sliderLocation.value = { x: event.clientX, y: event.clientY };
     const carouselRect = carousel.value?.$el.getBoundingClientRect();
     sliderLocation.value.y = Math.max(sliderLocation.value.y, carouselRect.top + 95);
     sliderLocation.value.y = Math.min(sliderLocation.value.y, carouselRect.bottom - 95);
     sliderLocation.value.x = Math.max(sliderLocation.value.x, carouselRect.left + 31);
     sliderLocation.value.x = Math.min(sliderLocation.value.x, carouselRect.right - 31);
-  }
-  else if (Math.abs(sliderLocation.value.y - event.offsetY) > 10 && Math.abs(sliderLocation.value.x - event.offsetX) < 10 && sw.brightness && !isNaN(sw.brightness)) {
+  } else if (Math.abs(sliderLocation.value.y - event.offsetY) > 10 && Math.abs(sliderLocation.value.x - event.offsetX) < 10) {
     sliderBrightness.value = sw.brightness ?? 0;
     activeSwitch.value = sw;
     sendingBrightness.value = false;
   }
-  updateBrightness(event);
 }
 
 </script>
