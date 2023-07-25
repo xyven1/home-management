@@ -4,7 +4,8 @@
       {{ svg?.[layer]?.name ?? "Loading" }}
     </VAppBarTitle>
     <VAppBarNavIcon>
-      <ThemeToggle />
+      <VBtn v-if="!editing.enabled" icon="mdi-layers-edit" @click="startEditing" />
+      <VBtn v-else icon="mdi-check-all" @click="doneEditing" />
     </VAppBarNavIcon>
   </VAppBar>
   <VCarousel
@@ -12,7 +13,7 @@
     class="carousel" :show-arrows="smAndUp"
     hide-delimiter-background
   >
-    <VCarouselItem v-for="svgLayer in svg " :key="svgLayer.name">
+    <VCarouselItem v-for="svgLayer in svg " :key="svgLayer.name" :disabled="!!sliderActiveSwitch || editing.regionSelected">
       <svg viewBox="0 0 295 515" width="100%">
         <image
           v-if="svgLayer.background !== undefined" width="295" height="515"
@@ -37,22 +38,19 @@
         <path
           v-for="(region, index) in svgLayer.regions " :key="index" :d="region.d"
           style="cursor: pointer; stroke: transparent" :style="{
-            fill: selecting
+            fill: editing.enabled
               ? region.sn
-                ? '#FC8C00'
-                : 'rgb(var(--v-theme-secondary))'
+                ? 'rgb(var(--v-theme-success))'
+                : 'rgb(var(--v-theme-surface-variant))'
               : {
                 0: 'rgb(var(--v-theme-surface-variant))',
                 1: region.sw?.brightness && !isNaN(region.sw.brightness) ? `url(#${'gradient' + region.title.replace(' ', '')})` : 'rgb(var(--v-theme-tertiary))',
-                // 1: interpolateColor(theme.current.value.colors['surface-variant'],
-                // theme.current.value.colors.tertiary, region.sw && region.sw.brightness ? (+region.sw.brightness) / 100 : 1),
                 2: 'rgb(var(--v-theme-info))',
-                Error: 'rgb(var(--v-theme-error))',
-              }[region.sw?.state ?? 0] || 'rgb(var(--v-theme-secondary))'
+              }[region.sw?.state ?? 0] || 'rgb(var(--v-theme-error))'
             , 'stroke-width': region.stroke ?? 0,
-          }" @click="toggle(region.sn, region.sw)"
-          @pointermove.passive.capture="handlePointerMove($event, region.sw)"
-          @pointerup="closeSliderPopUp"
+          }" @click="editing.enabled ? startEditingRegion(region) : toggle(region.sn, region.sw)"
+          @pointermove.passive.capture="!editing.enabled && handlePointerMove($event, region.sw)"
+          @pointerup="!editing.enabled && closeSliderPopUp($event)"
         >
           <title>
             {{ region.title }}
@@ -60,9 +58,53 @@
         </path>
       </svg>
     </VCarouselItem>
+    <VOverlay
+      v-model="editing.regionSelected" contained class="align-end justify-center"
+      style="touch-action: none;"
+    >
+      <VContainer>
+        <VCard :title="`Edit ${editing.selectedRegion?.title ?? 'Unassigned'}`" :loading="editing.saving">
+          <VForm :disabled="editing.saving || editing.saveFailed" @submit.prevent>
+            <VCardText>
+              <VChipGroup v-model="switchListFilters" filter>
+                <VChip text="Show only unassigned" color="primary" />
+              </VChipGroup>
+              <VAutocomplete
+                v-model="editing.selectedSwitch" label="Assigned Switch" :items="switchListFilters === undefined ?
+                  switchList : (() => {
+                    const assigned = svg?.flatMap(screen => screen.regions).map(region => region.sn)
+                    return switchList.filter(s => !assigned?.includes(s.serialNumber))
+                  })()"
+                :item-title="item => item.name" :item-value="item => item" hide-details="auto"
+                validate-on="submit" :rules="[v => !!v || 'Required']" auto-select-first
+              />
+            </VCardText>
+            <VCardActions>
+              <VBtn color="primary" type="submit" @click="saveEdit">
+                Save
+              </VBtn>
+              <VBtn @click="doneEditingRegion">
+                Cancel
+              </VBtn>
+            </VCardActions>
+          </VForm>
+          <VOverlay
+            v-model="editing.saveFailed" contained persistent
+            class="align-center justify-center"
+          >
+            <VAlert type="error" density="compact" prominent>
+              Failed to save
+              <VBtn variant="tonal" @click="doneEditingRegion">
+                OK
+              </VBtn>
+            </VAlert>
+          </VOverlay>
+        </VCard>
+      </VContainer>
+    </VOverlay>
   </VCarousel>
   <div
-    v-show="activeSwitch" class="slider" :style="{
+    v-show="sliderActiveSwitch" class="slider" :style="{
       top: sliderLocation?.y + 'px',
       left: sliderLocation?.x + 'px'
     }"
@@ -76,38 +118,23 @@
   </div>
 </template>
 <script lang="ts" setup>
-import { ref } from "vue";
+import { Ref, ref } from "vue";
 import { useAppStore } from "@/store/app";
-import ThemeToggle from "@/components/ThemeToggle.vue";
 import { Svg, Region, Switch } from "@home-management/lib/types/socket";
 import { storeToRefs } from "pinia";
 import { useDisplay } from 'vuetify'
 import { useLightsStore } from "@/store/lights";
-import { VCarousel } from "vuetify/lib/components/index.mjs";
+import { VCarousel, VOverlay } from "vuetify/lib/components/index.mjs";
 
 const { layer } = storeToRefs(useLightsStore());
 const { socket } = useAppStore();
 const { smAndUp } = useDisplay();
 
-const selecting = ref(false);
 const carousel = ref<VCarousel | undefined>();
 const svg = ref<Svg | null>(null);
 
 // Pure helper functions
-function interpolateColor(a: string, b: string, amount: number): string {
-  var ah = +a.replace('#', '0x'),
-    ar = ah >> 16, ag = ah >> 8 & 0xff, ab = ah & 0xff,
-    bh = +b.replace('#', '0x'),
-    br = bh >> 16, bg = bh >> 8 & 0xff, bb = bh & 0xff,
-    rr = ar + amount * (br - ar),
-    rg = ag + amount * (bg - ag),
-    rb = ab + amount * (bb - ab);
-  return '#' + ((1 << 24) + (rr << 16) + (rg << 8) + rb | 0).toString(16).slice(1);
-}
-function backgroundHREF(name: string): string {
-  const href = new URL(`../assets/${name}`, import.meta.url).href;
-  return href;
-}
+const backgroundHREF = (name: string): string => new URL(`../assets/${name}`, import.meta.url).href;
 
 // Server interaction
 async function getSwitch(r: Region) {
@@ -155,26 +182,96 @@ socket.on("connect", () => {
   );
 })
 
+// Editing
+const editing: Ref<{
+  enabled: boolean;
+  regionSelected: boolean;
+  saving: boolean;
+  saveFailed: boolean;
+  selectedRegion: Region | undefined;
+  selectedSwitch: Switch | undefined;
+}> = ref({
+  enabled: false,
+  regionSelected: false,
+  saving: false,
+  saveFailed: false,
+  selectedRegion: undefined,
+  selectedSwitch: undefined,
+});
+const switchList = ref<Switch[]>([]);
+const switchListFilters = ref<number | undefined>();
+
+function startEditing(): void {
+  editing.value.enabled = true;
+}
+
+function doneEditing(): void {
+  editing.value.enabled = false;
+  doneEditingRegion();
+}
+
+async function startEditingRegion(region: Region): Promise<void> {
+  editing.value.selectedRegion = region;
+  editing.value.regionSelected = true;
+  editing.value.saving = false;
+  editing.value.saveFailed = false;
+  editing.value.selectedSwitch = undefined;
+  switchList.value = [];
+  try {
+    switchList.value = await socket.emitWithAck("getSwitches");
+    editing.value.selectedSwitch = region.sn ? switchList.value.find((s) => s.serialNumber === region.sn) : undefined;
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+function doneEditingRegion(): void {
+  editing.value.regionSelected = false;
+}
+
+async function saveEdit(): Promise<void> {
+  if (!editing.value.selectedSwitch || !editing.value.selectedRegion) return;
+  editing.value.saving = true;
+  editing.value.selectedRegion.sn = editing.value.selectedSwitch.serialNumber;
+  editing.value.selectedRegion.sw = editing.value.selectedSwitch;
+  try {
+    if (await socket.emitWithAck("setSvg", editing.value.selectedRegion))
+      doneEditingRegion();
+    else
+      editing.value.saveFailed = true;
+  } catch (err) {
+    console.error(err);
+    editing.value.saveFailed = true;
+  } finally {
+    editing.value.saving = false;
+  }
+}
+
 // Brightness slider
-const activeSwitch = ref<Switch | null>(null);
+const sliderActiveSwitch = ref<Switch | null>(null);
 const sliderLocation = ref<{ x: number, y: number } | null>(null);
 const sliderBrightness = ref(0);
-const sendingBrightness = ref(false);
+const sliderSendingBrightness = ref(false);
 
-async function closeSliderPopUp(): Promise<void> {
-  if (!activeSwitch.value) return;
-  sendingBrightness.value = true;
-  const res = await socket.emitWithAck("setBrightness", activeSwitch.value.serialNumber, sliderBrightness.value)
-  if (res.ok) {
-    activeSwitch.value.brightness = res.value.brightness;
-    activeSwitch.value.state = res.value.BinaryState;
+async function closeSliderPopUp(p: PointerEvent): Promise<void> {
+  console.log(p);
+  if (!sliderActiveSwitch.value || sliderSendingBrightness.value) return;
+  sliderSendingBrightness.value = true;
+  try {
+    const res = await socket.emitWithAck("setBrightness", sliderActiveSwitch.value.serialNumber, sliderBrightness.value)
+    if (res.ok) {
+      sliderActiveSwitch.value.brightness = res.value.brightness;
+      sliderActiveSwitch.value.state = res.value.BinaryState;
+    }
+  } finally {
+    sliderActiveSwitch.value = null;
+    sliderLocation.value = null;
+    sliderSendingBrightness.value = false;
   }
-  activeSwitch.value = null;
-  sliderLocation.value = null;
 }
 
 function updateBrightness(event: PointerEvent): void {
-  if (!activeSwitch.value || sendingBrightness.value) return;
+  if (!sliderActiveSwitch.value || sliderSendingBrightness.value) return;
   const slider = document.getElementsByClassName('innerSlider')[0].getBoundingClientRect()
   const position = 1 - (event.clientY - slider.top) / slider.height;
   sliderBrightness.value = Math.round(Math.max(0, Math.min(100, Math.round(position * 100))));
@@ -182,19 +279,17 @@ function updateBrightness(event: PointerEvent): void {
 
 function handlePointerMove(event: PointerEvent, sw: Switch | undefined): void {
   if (event.type !== "pointermove" || event.pressure <= 0 || sw === undefined || !sw.brightness || isNaN(sw.brightness)) return;
-  if (activeSwitch.value) {
+  if (sliderActiveSwitch.value) {
     updateBrightness(event);
   } else if (!sliderLocation.value) {
-    sliderLocation.value = { x: event.clientX, y: event.clientY };
+    sliderLocation.value = { x: event.clientX, y: event.clientY - 160 * (.5 - sw.brightness / 100) };
     const carouselRect = carousel.value?.$el.getBoundingClientRect();
-    sliderLocation.value.y = Math.max(sliderLocation.value.y, carouselRect.top + 95);
-    sliderLocation.value.y = Math.min(sliderLocation.value.y, carouselRect.bottom - 95);
-    sliderLocation.value.x = Math.max(sliderLocation.value.x, carouselRect.left + 31);
-    sliderLocation.value.x = Math.min(sliderLocation.value.x, carouselRect.right - 31);
-  } else if (Math.abs(sliderLocation.value.y - event.offsetY) > 10 && Math.abs(sliderLocation.value.x - event.offsetX) < 10) {
+    sliderLocation.value.y = Math.min(Math.max(sliderLocation.value.y, carouselRect.top + 95), carouselRect.bottom - 95);
+    sliderLocation.value.x = Math.min(Math.max(sliderLocation.value.x, carouselRect.left + 31), carouselRect.right - 31);
+  } else if (Math.abs(sliderLocation.value.y - event.clientY) > 10 && Math.abs(sliderLocation.value.x - event.clientX) < 20) {
     sliderBrightness.value = sw.brightness ?? 0;
-    activeSwitch.value = sw;
-    sendingBrightness.value = false;
+    sliderActiveSwitch.value = sw;
+    sliderSendingBrightness.value = false;
   }
 }
 
@@ -209,9 +304,14 @@ function handlePointerMove(event: PointerEvent, sw: Switch | undefined): void {
     height: 100%;
     width: 100% !important;
   }
+
+  svg > path {
+    touch-action: auto !important;
+  }
 }
 
 .slider {
+  touch-action: auto !important;
   position: absolute;
   width: 200vw;
   height: 200vh;

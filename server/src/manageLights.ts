@@ -140,6 +140,7 @@ export default (io: AppServer): void => {
           name: device.device.friendlyName,
           serialNumber: device.device.serialNumber,
           state: device.device.binaryState,
+          brightness: device.device.brightness,
         }))
       );
     });
@@ -196,9 +197,12 @@ export default (io: AppServer): void => {
             value: {
               BinaryState: Number(state.BinaryState),
               brightness:
-                state.brightness === undefined ? +state.brightness : undefined,
+                state.brightness != null ? Number(state.brightness) : undefined,
             },
           });
+          socket.emit("stateChange", serialNumber, state.BinaryState);
+          if (state.brightness != null)
+            socket.emit("brightnessChange", serialNumber, state.brightness);
         } catch (err: any) {
           wsCallback({ ok: false, err: err.message ?? err });
         }
@@ -220,7 +224,24 @@ export default (io: AppServer): void => {
         const device = devices.get(serialNumber);
         if (device !== undefined)
           try {
-            wsCallback({ ok: true, value: await device.setBinaryState(state) });
+            const newState = await device.setBinaryState(state);
+            wsCallback({
+              ok: true,
+              value: {
+                BinaryState: Number(newState.BinaryState),
+                brightness:
+                  newState.brightness != null
+                    ? Number(newState.brightness)
+                    : undefined,
+              },
+            });
+            socket.emit("stateChange", serialNumber, newState.BinaryState);
+            if (newState.brightness != null)
+              socket.emit(
+                "brightnessChange",
+                serialNumber,
+                newState.brightness
+              );
           } catch (err: any) {
             wsCallback({ ok: false, err: err.message ?? err });
           }
