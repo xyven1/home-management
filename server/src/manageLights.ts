@@ -11,16 +11,8 @@ import fs from "fs";
 import upath from "upath";
 import Wemo from "wemo-client";
 import type WemoClient from "wemo-client/lib/client.js";
+import { configPath, dataPath } from "./environment.js";
 import type { AppServer, DeviceInfo } from "./types.js";
-
-const dataPath =
-  process.platform === "win32"
-    ? "C:/ProgramData/home-management/"
-    : "/var/cache/home-management/";
-const configPath =
-  process.platform === "win32"
-    ? "C:/Program Files/home-management/"
-    : "/etc/home-management/";
 
 export default (io: AppServer): void => {
   const devicesPath = upath.join(dataPath, "devices.json");

@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <ArduinoOTA.h>
+#include <ESPmDNS.h>
 #include <ETH.h>
 
 #include "config.h"
@@ -10,7 +11,6 @@
 #include "server.h"
 
 #define HOSTNAME "irrigation-controller"
-#define IP_ADDR 10, 200, 70, 45
 
 // function headers
 void ArduinoEvent(WiFiEvent_t event);
@@ -23,13 +23,6 @@ static portMUX_TYPE spinlock = portMUX_INITIALIZER_UNLOCKED;
 static bool eth_connected = false;
 static bool wifi_connected = false;
 char mac[18] = "de:ad:be:ef:fe:ed";
-IPAddress local_ip(IP_ADDR);
-IPAddress gateway(10, 200, 10, 1);
-IPAddress subnet(255, 255, 255, 0);
-IPAddress dns1(10, 200, 10, 1);
-IPAddress dns2(1, 1, 1, 1);
-
-// Synchronization objects
 
 // Tasks
 TaskHandle_t irrigationControlTask;
@@ -39,6 +32,7 @@ void setup() {
   uint8_t mac_raw[6];
   esp_read_mac(mac_raw, ESP_MAC_WIFI_STA);
   sprintf(mac, "%02X:%02X:%02X:%02X:%02X:%02X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+  configMutex = xSemaphoreCreateMutex();
 
   init_logging();
   logger_printf("Starting setup\n");
@@ -48,11 +42,22 @@ void setup() {
   ETH.begin();
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
+  // wait for connection
+  while (!eth_connected && !wifi_connected) {
+    delay(100);
+  }
+
   init_relay();
 
   xTaskCreate(vTaskIrrigationControl, "IrrigationControl", 10000, NULL, 1, &irrigationControlTask);
   xTaskCreate(vTaskUpdater, "OTA", 10000, NULL, 5, NULL);
 
+  if (!MDNS.begin(HOSTNAME)) {
+    logger_printf("Error setting up MDNS responder!\n");
+  } else {
+    logger_printf("mDNS responder started\n");
+    MDNS.addService("http", "tcp", 80);
+  }
   start_server();
 }
 

@@ -1,7 +1,9 @@
 #include "config.h"
 #include "server.h"
 #include "irrigation.h"
-#include <AsyncElegantOTA.h>
+#include "logging.h"
+// #include <AsyncElegantOTA.h>
+#include <AsyncJson.h>
 
 const char *stateToString[] = {stringify(Running), stringify(Updating)};
 AsyncWebServer server(80);
@@ -28,6 +30,9 @@ void start_server(){
     request->send(200, "text/plain", "Restarting");
     ESP.restart();
   });
+  server.on("/mac", HTTP_GET, [](AsyncWebServerRequest *request) {
+    request->send(200, "text/plain", mac);
+  });
   server.on("/state", HTTP_GET, [](AsyncWebServerRequest *request) {
     AsyncResponseStream *response = request->beginResponseStream("application/json");
     serializeJson(makeDoc(), *response);
@@ -38,6 +43,16 @@ void start_server(){
     serializeJson(config.toJson(), *response);
     request->send(response);
   });
+  auto handler = new AsyncCallbackJsonWebHandler("/config", [](AsyncWebServerRequest *request, JsonVariant &json) {
+    logger_printf("Got config update\n");
+    auto res = config.fromJson(json);
+    if (!res.has_value())
+      request->send(200, "text/plain", "success");
+    else
+      request->send(400, "text/plain", res.value().c_str());
+  });
+  handler->setMethod(HTTP_POST);
+  server.addHandler(handler);
   server.on("^\\/api\\/relay\\/([0-9]+)\\/(on|off)$", HTTP_GET, [](AsyncWebServerRequest *request) {
     int relayNum = request->pathArg(0).toInt();
     bool relayAction = request->pathArg(1).equals("on");
@@ -52,8 +67,27 @@ void start_server(){
       relay.turn_off_channel(relayNum);
     request->send(200, "text/plain", "success");
   });
+  server.on("^\\/api\\/valve\\/([0-9]+)\\/(on|off)$", HTTP_GET, [](AsyncWebServerRequest *request) {
+    int valveID = request->pathArg(0).toInt();
+    bool valveAction = request->pathArg(1).equals("on");
+    // set the relay
+    valve_t *valve = config.getValve(valveID);
+    if (valve == NULL) {
+      request->send(400, "text/plain", "No such valve");
+      return;
+    }
+    if(config.getDevice(valve->deviceID)->mac != mac) {
+      request->send(200, "text/plain");
+      return;
+    }
+    if(valveAction)
+      relay.turn_on_channel(valve->relay);
+    else
+      relay.turn_off_channel(valve->relay);
+    request->send(200, "text/plain", "success");
+  });
 
-  AsyncElegantOTA.begin(&server);
+  // AsyncElegantOTA.begin(&server);
   server.begin();
 }
 

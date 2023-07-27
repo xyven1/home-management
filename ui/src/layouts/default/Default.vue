@@ -1,5 +1,5 @@
 <template>
-  <v-app style="height: 100%">
+  <v-app>
     <bottom-bar />
     <default-view />
   </v-app>
@@ -11,10 +11,12 @@ import DefaultView from "./View.vue";
 </script>
 
 <style>
+html {
+  overflow: auto;
+}
 html,
 body,
 #app {
-  overflow: hidden !important;
   height: 100%;
 }
 </style>

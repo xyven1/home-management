@@ -1,3 +1,5 @@
+import * as Irrigation from "./irrigationConfig.js";
+
 export type SerialNumber = string;
 
 export interface Device {
@@ -76,6 +78,21 @@ export interface ClientToServerEvents {
   // for svg
   setSvg: (region: Region, wsCallback: (res: boolean) => void) => void;
   getSvg: (wsCallback: (svg: Svg) => void) => void;
+  // for irrigation
+  setIrrigationRelay: (
+    mac: string,
+    relay: number,
+    state: boolean,
+    wsCallback: (res: boolean) => void
+  ) => void;
+  getIrrigationDevices: (wsCallback: (devices: string[]) => void) => void;
+  getIrrigationConfig: (
+    wsCallback: (config: Irrigation.Config) => void
+  ) => void;
+  setIrrigationConfig: (
+    config: Irrigation.Config,
+    wsCallback: (res: boolean) => void
+  ) => void;
 }
 
 export interface ServerToClientEvents {
@@ -83,4 +100,7 @@ export interface ServerToClientEvents {
   // for lights
   stateChange: (sn: SerialNumber, state: number) => void;
   brightnessChange: (sn: SerialNumber, brightness: number) => void;
+  // for irrigation
+  irrigationConfigChange: (config: Irrigation.Config) => void;
+  newIrrigationDevice: (device: string) => void;
 }

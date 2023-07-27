@@ -1,16 +1,20 @@
 <template>
-  <v-bottom-navigation color="primary" location="bottom">
-    <v-btn to="/lights">
-      <v-icon>mdi-lightbulb</v-icon>
-      Lights
-    </v-btn>
-    <v-btn to="/entertainment">
-      <v-icon>mdi-speaker</v-icon>
-      Entertainment
-    </v-btn>
-    <v-btn to="/settings">
-      <v-icon>mdi-cog</v-icon>
-      Settings
-    </v-btn>
-  </v-bottom-navigation>
+  <VBottomNavigation color="primary" :rounded="30">
+    <VBtn to="/lights">
+      <VIcon>mdi-lightbulb</VIcon>
+      <span>Lights</span>
+    </VBtn>
+    <VBtn to="/entertainment">
+      <VIcon>mdi-speaker</VIcon>
+      <span>Entertainment</span>
+    </VBtn>
+    <VBtn to="/irrigation">
+      <VIcon>mdi-water</VIcon>
+      <span>Irrigation</span>
+    </VBtn>
+    <VBtn to="/settings">
+      <VIcon>mdi-cog</VIcon>
+      <span>Settings</span>
+    </VBtn>
+  </VBottomNavigation>
 </template>

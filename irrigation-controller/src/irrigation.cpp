@@ -1,10 +1,16 @@
 #include "irrigation.h"
 #include "config.h"
+#include "logging.h"
 #include "esp_time_helpers.h"
 
 #include <map>
 
 Multi_Channel_Relay relay;
+
+struct valve_state_t {
+  event_priority_t priority = 0;
+  bool state = false;
+};
 
 void init_relay() {
   Wire.setPins(13, 16);
@@ -18,35 +24,36 @@ void vTaskIrrigationControl(void *pvParameters) {
   for (;;) {
     xTaskDelayUntil(&xLastWakeTime, xFrequency);
     time_t now = get_epoch_time();
-    if(now == 0)
+    if (now == 0)
       continue;
     // keep track of the relays state
-    std::vector<bool> valve_state(config.Valves.size(), false);
-    for (auto &event : config.Events) {
-      auto sequence = config.getSequence(event.sequenceID);
-      if (sequence == nullptr)
-        continue;
+    valve_state_t valve_state[8];
+    // std::map<valve_id_t, valve_state_t> valve_state;
+    xSemaphoreTake(configMutex, portMAX_DELAY);
+    for (auto &[id, event] : config.Events) {
       auto job_opt = event.getCurrentJob(now);
-      if(!job_opt.has_value())
+      if (!job_opt.has_value())
         continue;
       auto job = job_opt.value();
-      if(job.valveIDs.size() == 0)
+      if (job.valveIDs.size() == 0)
         continue;
       for (auto &valveID : job.valveIDs) {
         auto valve = config.getValve(valveID);
-        if (valve == nullptr)
+        if (valve == nullptr || strcmp(config.getDevice(valve->deviceID)->mac, mac) || valve->relay < 1 || valve->relay > 8)
           continue;
-        valve_state[valve->relay] = true;
+        logger_printf("Valve %d is valid. Event prio: %d, current prio: %d\n", valveID, event.priority, valve_state[valve->relay - 1].priority);
+        if (valve_state[valve->relay - 1].priority < event.priority) {
+          valve_state[valve->relay - 1].priority = event.priority;
+          valve_state[valve->relay - 1].state = true;
+        }
       }
     }
-    for (int i = 0; i < valve_state.size(); i++) {
-      auto valve = config.getValve(i);
-      if (valve == nullptr || mac != valve->mac)
-        continue;
-      if(valve_state[i])
-        relay.turn_on_channel(i);
+    xSemaphoreGive(configMutex);
+    for (int i = 0; i < 8; i++) {
+      if (valve_state[i].state)
+        relay.turn_on_channel(i + 1);
       else
-        relay.turn_off_channel(i);
+        relay.turn_off_channel(i + 1);
     }
   }
 }

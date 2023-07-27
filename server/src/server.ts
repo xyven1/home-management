@@ -1,14 +1,15 @@
 #!/usr/bin/env node
 
-import express from "express";
-import cors from "cors";
 import compression from "compression";
-import path from "path";
+import cors from "cors";
+import express from "express";
 import http from "http";
+import path from "path";
 import { Server } from "socket.io";
-import manageTV from "./manageTV.js";
-import manageLights from "./manageLights.js";
+import manageIrrigation from "./irrigation.js";
 import manageAudio from "./manageAudio.js";
+import manageLights from "./manageLights.js";
+import manageTV from "./manageTV.js";
 import { type AppServer } from "./types.js";
 
 // catch uncaught exceptions
@@ -59,11 +60,7 @@ server.listen(process.env.SERVER_PORT, () => {
   );
 });
 
-// manage lights
 manageLights(io);
-
-// manage audio
 manageAudio(io);
-
-// manage tv
 manageTV(io);
+manageIrrigation(io);
