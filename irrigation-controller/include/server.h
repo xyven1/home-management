@@ -9,15 +9,14 @@
 
 #define stringify(name) #name
 
-enum State {
+enum DeviceState {
   Running = 0,
   Updating,
 };
 
 extern AsyncWebServer server;
-extern AsyncWebSocket ws;
 extern const char *stateToString[];
-extern State state;
+extern DeviceState deviceState;
 
 StaticJsonDocument<1000> makeDoc();
 void start_server();

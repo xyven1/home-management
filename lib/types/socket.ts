@@ -1,6 +1,7 @@
 import * as Irrigation from "./irrigationConfig.js";
+import { type Branded } from "./brand.js";
 
-export type SerialNumber = string;
+export type SerialNumber = Branded<string, "SerialNumber">;
 
 export interface Device {
   name: string;
@@ -19,7 +20,7 @@ export interface Switch {
 export interface Region {
   d: string;
   title: string;
-  sn: string;
+  sn: SerialNumber;
   stroke?: number;
   sw?: Switch;
 }
@@ -36,7 +37,9 @@ export interface DeviceState {
   brightness?: number;
 }
 
-export type WsResponse<T> = { ok: true; value: T } | { ok: false; err: string };
+export type WsResponse<T = void> =
+  | (T extends void ? { ok: true } : { ok: true; value: T })
+  | { ok: false; err: string };
 
 export enum TVPosition {
   Up,
@@ -76,25 +79,35 @@ export interface ClientToServerEvents {
     wsCallback: (res: WsResponse<DeviceState[]>) => void
   ) => void;
   // for svg
-  setSvg: (region: Region, wsCallback: (res: boolean) => void) => void;
+  setSvg: (region: Region, wsCallback: (res: WsResponse) => void) => void;
   getSvg: (wsCallback: (svg: Svg) => void) => void;
   // for irrigation
   setIrrigationRelay: (
     mac: string,
     relay: number,
     state: boolean,
-    wsCallback: (res: boolean) => void
+    wsCallback: (res: WsResponse) => void
   ) => void;
-  getIrrigationDevices: (wsCallback: (devices: string[]) => void) => void;
+  setIrrigationValveState: (
+    valveID: Irrigation.ValveID,
+    state: boolean,
+    duration: number,
+    wsCallback: (res: WsResponse<Irrigation.ValveExecution | null>) => void
+  ) => void;
+  setIrrigationSequenceState: (
+    sequenceID: Irrigation.SequenceID,
+    state: boolean,
+    wsCallback: (res: WsResponse<Irrigation.SequenceExecution | null>) => void
+  ) => void;
+  getIrrigationState: (wsCallback: (state: Irrigation.State) => void) => void;
   getIrrigationConfig: (
     wsCallback: (config: Irrigation.Config) => void
   ) => void;
   setIrrigationConfig: (
     config: Irrigation.Config,
-    wsCallback: (res: boolean) => void
+    wsCallback: (res: WsResponse) => void
   ) => void;
 }
-
 export interface ServerToClientEvents {
   // for audio
   // for lights
@@ -102,5 +115,5 @@ export interface ServerToClientEvents {
   brightnessChange: (sn: SerialNumber, brightness: number) => void;
   // for irrigation
   irrigationConfigChange: (config: Irrigation.Config) => void;
-  newIrrigationDevice: (device: string) => void;
+  irrigationStateChange: (state: Irrigation.State) => void;
 }

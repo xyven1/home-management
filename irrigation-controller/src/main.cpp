@@ -9,8 +9,9 @@
 #include "logging.h"
 #include "secrets.h"
 #include "server.h"
+#include "state.h"
 
-#define HOSTNAME "irrigation-controller"
+#define HOSTNAME "makeitwet-"
 
 // function headers
 void ArduinoEvent(WiFiEvent_t event);
@@ -22,7 +23,7 @@ static portMUX_TYPE spinlock = portMUX_INITIALIZER_UNLOCKED;
 // globals for ethernet connection
 static bool eth_connected = false;
 static bool wifi_connected = false;
-char mac[18] = "de:ad:be:ef:fe:ed";
+char mac[18];
 
 // Tasks
 TaskHandle_t irrigationControlTask;
@@ -31,13 +32,17 @@ void setup() {
   // set mac address
   uint8_t mac_raw[6];
   esp_read_mac(mac_raw, ESP_MAC_WIFI_STA);
-  sprintf(mac, "%02X:%02X:%02X:%02X:%02X:%02X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+  sprintf(mac, "%02X:%02X:%02X:%02X:%02X:%02X", mac_raw[0], mac_raw[1], mac_raw[2], mac_raw[3], mac_raw[4], mac_raw[5]);
   configMutex = xSemaphoreCreateMutex();
+  stateMutex = xSemaphoreCreateMutex();
+  char last3hex[7];
+  sprintf(last3hex, "%02X%02X%02X", mac_raw[3], mac_raw[4], mac_raw[5]);
+  String hostname = HOSTNAME + String(last3hex);
 
   init_logging();
-  logger_printf("Starting setup\n");
+  logger_printf("%s starting setup.\n", hostname.c_str());
   // start ethernet
-  WiFi.setHostname(HOSTNAME);
+  WiFi.setHostname(hostname.c_str());
   WiFi.onEvent(ArduinoEvent);
   ETH.begin();
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
@@ -52,7 +57,7 @@ void setup() {
   xTaskCreate(vTaskIrrigationControl, "IrrigationControl", 10000, NULL, 1, &irrigationControlTask);
   xTaskCreate(vTaskUpdater, "OTA", 10000, NULL, 5, NULL);
 
-  if (!MDNS.begin(HOSTNAME)) {
+  if (!MDNS.begin(hostname.c_str())) {
     logger_printf("Error setting up MDNS responder!\n");
   } else {
     logger_printf("mDNS responder started\n");
@@ -117,14 +122,9 @@ void vTaskUpdater(void *pvParameters) {
   ArduinoOTA
       .onStart([]() {
         logger_printf("Recieved updated request");
-        ws.enable(false);
-        // Advertise connected clients what's going on'
-        ws.textAll("OTA Update Started");
-        // Close them
-        ws.closeAll();
 
         vTaskSuspend(irrigationControlTask);
-        state = Updating;
+        deviceState = Updating;
         String type;
         if (ArduinoOTA.getCommand() == U_FLASH)
           type = "flash";

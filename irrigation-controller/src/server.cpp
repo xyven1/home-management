@@ -2,19 +2,24 @@
 #include "server.h"
 #include "irrigation.h"
 #include "logging.h"
+#include "state.h"
+
+#include "html_begin.pp"
+#include "index.html"
+#include "html_end.pp"
+
 // #include <AsyncElegantOTA.h>
 #include <AsyncJson.h>
 
 const char *stateToString[] = {stringify(Running), stringify(Updating)};
 AsyncWebServer server(80);
-AsyncWebSocket ws("/ws");
-State state = Running;
+DeviceState deviceState = Running;
 
 StaticJsonDocument<1000> makeDoc() {
   StaticJsonDocument<1000> doc;
   doc["TimeStamp"] = esp_timer_get_time();
   doc["FreeMemory"] = ESP.getFreeHeap();
-  doc["State"] = stateToString[state];
+  doc["State"] = stateToString[deviceState];
   doc["Mac"] = ETH.macAddress();
   doc["Commit"] = COMMIT_HASH;
   doc["CompilationTime"] = COMPILATION_TIME;
@@ -22,10 +27,9 @@ StaticJsonDocument<1000> makeDoc() {
 }
 
 void start_server(){
-  ws.onEvent(onWSEvent);
-  server.addHandler(&ws);
   server.onNotFound([](AsyncWebServerRequest *request) { request->send(404); });
-  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) { request->send(200, "text/plain", "Hello, world"); });
+  //server index html
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) { request->send(200, "text/html", html_page); });
   server.on("/restart", HTTP_GET, [](AsyncWebServerRequest *request) {
     request->send(200, "text/plain", "Restarting");
     ESP.restart();
@@ -38,21 +42,36 @@ void start_server(){
     serializeJson(makeDoc(), *response);
     request->send(response);
   });
-  server.on("/config", HTTP_GET, [](AsyncWebServerRequest *request) {
+  server.on("/api/config", HTTP_GET, [](AsyncWebServerRequest *request) {
     AsyncResponseStream *response = request->beginResponseStream("application/json");
     serializeJson(config.toJson(), *response);
     request->send(response);
   });
-  auto handler = new AsyncCallbackJsonWebHandler("/config", [](AsyncWebServerRequest *request, JsonVariant &json) {
-    logger_printf("Got config update\n");
+  auto configHandler = new AsyncCallbackJsonWebHandler("/api/config", [](AsyncWebServerRequest *request, JsonVariant &json) {
+    logger_printf("Got config update from %s\n", request->client()->remoteIP().toString().c_str());
     auto res = config.fromJson(json);
     if (!res.has_value())
       request->send(200, "text/plain", "success");
     else
       request->send(400, "text/plain", res.value().c_str());
   });
-  handler->setMethod(HTTP_POST);
-  server.addHandler(handler);
+  configHandler->setMethod(HTTP_POST);
+  server.addHandler(configHandler);
+  server.on("/api/state", HTTP_GET, [](AsyncWebServerRequest *request) {
+    AsyncResponseStream *response = request->beginResponseStream("application/json");
+    serializeJson(state.toJson(), *response);
+    request->send(response);
+  });
+  auto stateHandler = new AsyncCallbackJsonWebHandler("/api/state", [](AsyncWebServerRequest *request, JsonVariant &json) {
+    logger_printf("Got state update from %s\n", request->client()->remoteIP().toString().c_str());
+    auto res = state.fromJson(json);
+    if (!res.has_value())
+      request->send(200, "text/plain", "success");
+    else
+      request->send(400, "text/plain", res.value().c_str());
+  });
+  stateHandler->setMethod(HTTP_POST);
+  server.addHandler(stateHandler);
   server.on("^\\/api\\/relay\\/([0-9]+)\\/(on|off)$", HTTP_GET, [](AsyncWebServerRequest *request) {
     int relayNum = request->pathArg(0).toInt();
     bool relayAction = request->pathArg(1).equals("on");
@@ -92,10 +111,6 @@ void start_server(){
 }
 
 bool stop_server() {
+  server.end();
   return true;
-}
-
-void onWSEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data,
-             size_t len) {
-  // Handle WebSocket event
 }

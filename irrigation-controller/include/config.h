@@ -8,20 +8,20 @@
 typedef uint device_id_t;
 typedef struct {
   device_id_t id;
-  std::string name;
+  String name;
   char mac[18];
 } device_t;
 
 typedef uint valve_id_t;
 typedef struct {
   valve_id_t id;
-  std::string name;
+  String name;
   device_id_t deviceID;
   uint8_t relay;
 } valve_t;
 
 typedef struct {
-  std::string name;
+  String name;
   int duration;
   std::vector<valve_id_t> valveIDs;
 } job_t;
@@ -29,15 +29,17 @@ typedef struct {
 typedef uint sequence_id_t;
 typedef struct {
   sequence_id_t id;
-  std::string name;
+  String name;
   std::vector<job_t> jobs;
+
+  std::optional<job_t> getCurrentJob(int offset);
 } sequence_t;
 
 typedef uint event_id_t;
 typedef uint event_priority_t;
 typedef struct {
   event_id_t id;
-  std::string name;
+  String name;
   event_priority_t priority;
   sequence_id_t sequenceID;
   int startOffset;
@@ -54,14 +56,14 @@ public:
   std::map<sequence_id_t, sequence_t> Sequences;
   std::map<event_id_t, irrigation_event_t> Events;
   std::map<device_id_t, device_t> Devices;
-  std::string Timezone;
+  String Timezone;
 
   device_t *getDevice(device_id_t id);
   valve_t *getValve(valve_id_t id);
   sequence_t *getSequence(sequence_id_t id);
   irrigation_event_t *getEvent(event_id_t id);
   DynamicJsonDocument toJson();
-  std::optional<std::string> fromJson(JsonVariant &json);
+  std::optional<String> fromJson(JsonVariant &json);
 };
 
 extern Config config;

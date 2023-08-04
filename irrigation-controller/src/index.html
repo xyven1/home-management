@@ -1,0 +1,188 @@
+<!--
+    HTML_HELPER 
+    const char html_page[] = TO_STRING( 
+<!-- -->
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>MakeItWet</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      html,
+      body {
+        font-family: Arial, Helvetica, sans-serif;
+        overflow-x: hidden;
+      }
+      table,
+      th,
+      td {
+        border: 1px solid black;
+        border-collapse: collapse;
+      }
+      td,
+      th {
+        padding: 3px;
+      }
+      .main {
+        position: absolute;
+        top: 0;
+        left: 0;
+        display: flex;
+        flex-direction: column;
+        box-sizing: border-box;
+        height: 100vh;
+        width: 100%;
+        overflow: hidden;
+        padding: 10px;
+      }
+      .row {
+        display: flex;
+      }
+      .row-scroll {
+        overflow: hidden;
+        flex: 1;
+      }
+      .json-frame {
+        flex: auto;
+        display: flex;
+        flex-direction: column;
+        padding: 0.25em;
+      }
+      .json-frame-title {
+        text-align: center;
+        font-size: x-large;
+        border-color: black;
+        border-width: 10px;
+      }
+      .json-frame-text {
+        flex-grow: 1;
+        background-color: #00000010;
+        overflow: auto;
+      }
+    </style>
+    <script>
+      function doFetch() {
+        fetch("/api/state")
+          .then((response) => response.json())
+          .then((data) => {
+            document.getElementById("state").innerHTML = JSON.stringify(
+              data,
+              null,
+              4
+            );
+          });
+        fetch("/api/config")
+          .then((response) => response.json())
+          .then((data) => {
+            document.getElementById("config").innerHTML = JSON.stringify(
+              data,
+              null,
+              4
+            );
+          });
+      }
+      doFetch();
+      setInterval(doFetch, 1000);
+    </script>
+  </head>
+  <body>
+    <div class="main">
+      <h1>MakeItWet ESP32 Node</h1>
+      <h2>Routes</h2>
+      <table>
+        <tr>
+          <th>URL</th>
+          <th>Protocol</th>
+          <th>Body</th>
+          <th>Functionality</th>
+        </tr>
+        <tr>
+          <td><a href="/">/</a></td>
+          <td>GET</td>
+          <td>None</td>
+          <td>Home page</td>
+        </tr>
+        <tr>
+          <td><a href="/restart">/restart</a></td>
+          <td>GET</td>
+          <td>None</td>
+          <td>Restart the ESP32</td>
+        </tr>
+        <tr>
+          <td><a href="/mac">/mac</a></td>
+          <td>GET</td>
+          <td>None</td>
+          <td>Get the MAC address of the ESP32</td>
+        </tr>
+        <tr>
+          <td><a href="/state">/state</a></td>
+          <td>GET</td>
+          <td>None</td>
+          <td>Get the current state of the ESP32</td>
+        </tr>
+        <tr>
+          <td><a href="/api/config">/api/config</a></td>
+          <td>GET</td>
+          <td>None</td>
+          <td>Get the current configuration of the ESP32</td>
+        </tr>
+        <tr>
+          <td>/api/config</td>
+          <td>POST</td>
+          <td>JSON</td>
+          <td>Update the configuration of the ESP32</td>
+        </tr>
+        <tr>
+          <td><a href="/api/state">/api/state</a></td>
+          <td>GET</td>
+          <td>None</td>
+          <td>Get the current state of the ESP32</td>
+        </tr>
+        <tr>
+          <td>/api/stat</td>
+          <td>POST</td>
+          <td>JSON</td>
+          <td>Update the state of the ESP32</td>
+        </tr>
+        <tr>
+          <td>/api/relay/{relayNum}/{on|off}</td>
+          <td>GET</td>
+          <td>None</td>
+          <td>Turn on or off a relay</td>
+        </tr>
+        <tr>
+          <td>/api/valve/{valveID}/{on|off}</td>
+          <td>GET</td>
+          <td>None</td>
+          <td>Turn on or off a valve</td>
+        </tr>
+      </table>
+      <div class="row row-scroll">
+        <div class="json-frame">
+          <div class="json-frame-title">State</div>
+          <div class="json-frame-text">
+            <pre id="state"></pre>
+          </div>
+        </div>
+        <div class="json-frame">
+          <div class="json-frame-title">Config</div>
+          <div class="json-frame-text">
+            <pre id="config"></pre>
+          </div>
+        </div>
+      </div>
+
+      <h2>Source code</h2>
+      <p>
+        Source code is available on
+        <a
+          href="https://github.com/xyven1/home-management/tree/master/irrigation-controller/src"
+          >GitHub</a
+        >
+      </p>
+    </div>
+  </body>
+</html>
+
+<!-- ); // end of TO_STRING <!-- -->

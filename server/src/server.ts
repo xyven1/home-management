@@ -56,7 +56,7 @@ io.on("connection", (socket) => {
 // initilize server
 server.listen(process.env.SERVER_PORT, () => {
   console.log(
-    `app listening at http://localhost:${process.env.SERVER_PORT as string}`
+    `app listening at http://localhost:${process.env.SERVER_PORT ?? 3000}`
   );
 });
 

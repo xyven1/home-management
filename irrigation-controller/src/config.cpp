@@ -1,4 +1,5 @@
 #include "config.h"
+#include "logging.h"
 #include <chrono>
 #include <optional>
 
@@ -36,25 +37,28 @@ irrigation_event_t *Config::getEvent(event_id_t id) {
   }
 }
 
+std::optional<job_t> sequence_t::getCurrentJob(int offset) {
+  if (offset < 0)
+    return {};
+  for (auto &job : jobs) {
+    offset -= job.duration;
+    if (offset < 0)
+      return job;
+  }
+  return {};
+}
+
 std::optional<job_t> irrigation_event_t::getCurrentJob(time_t now) {
   // get hour minute and seocond from now
   struct tm timenowinfo;
   localtime_r(&now, &timenowinfo);
   if (now < start || now > end || !days[timenowinfo.tm_wday])
     return {};
-  auto nowOffset = timenowinfo.tm_hour * 3600 + timenowinfo.tm_min * 60 + timenowinfo.tm_sec;
-  nowOffset -= startOffset;
-  if (nowOffset < 0)
-    return {};
+  auto nowOffset = timenowinfo.tm_hour * 3600 + timenowinfo.tm_min * 60 + timenowinfo.tm_sec - startOffset;
   auto sequence = config.getSequence(sequenceID);
   if (sequence == nullptr || sequence->jobs.size() == 0)
     return {};
-  for (auto &job : sequence->jobs) {
-    nowOffset -= job.duration;
-    if (nowOffset < 0)
-      return job;
-  }
-  return {};
+  return sequence->getCurrentJob(nowOffset);
 }
 
 DynamicJsonDocument Config::toJson() {
@@ -111,7 +115,7 @@ DynamicJsonDocument Config::toJson() {
   return doc;
 }
 
-std::optional<std::string> Config::fromJson(JsonVariant &json) {
+std::optional<String> Config::fromJson(JsonVariant &json) {
   JsonArray devices = json["devices"];
   if (devices == NULL)
     return "No devices";
@@ -132,7 +136,7 @@ std::optional<std::string> Config::fromJson(JsonVariant &json) {
     if (m == NULL || strlen(m) != 17)
       return "Bad mac";
     strcpy(d.mac, m);
-    d.name = device["name"].as<std::string>();
+    d.name = device["name"].as<String>();
     newConfig.Devices.emplace(d.id, d);
   }
 
@@ -141,17 +145,17 @@ std::optional<std::string> Config::fromJson(JsonVariant &json) {
     v.id = valve["id"];
     v.deviceID = valve["deviceID"];
     v.relay = valve["relay"].as<int>();
-    v.name = valve["name"].as<std::string>();
+    v.name = valve["name"].as<String>();
     newConfig.Valves.emplace(v.id, v);
   }
   for (const auto &sequence : sequences) {
     sequence_t s;
     s.id = sequence["id"];
-    s.name = sequence["name"].as<std::string>();
+    s.name = sequence["name"].as<String>();
     JsonArray jobs = sequence["jobs"];
     for (const auto &job : jobs) {
       job_t j;
-      j.name = job["name"].as<std::string>();
+      j.name = job["name"].as<String>();
       j.duration = job["duration"];
       JsonArray valveIDs = job["valveIDs"];
       for (const auto &valveID : valveIDs) {
@@ -164,7 +168,7 @@ std::optional<std::string> Config::fromJson(JsonVariant &json) {
   for (const auto &event : events) {
     irrigation_event_t e;
     e.id = event["id"];
-    e.name = event["name"].as<std::string>();
+    e.name = event["name"].as<String>();
     e.priority = event["priority"];
     e.sequenceID = event["sequenceID"];
     e.startOffset = event["startOffset"];
@@ -177,14 +181,15 @@ std::optional<std::string> Config::fromJson(JsonVariant &json) {
     e.end = event["end"];
     newConfig.Events.emplace(e.id, e);
   }
-  newConfig.Timezone = json["timezone"].as<std::string>();
+  newConfig.Timezone = json["timezone"].as<String>();
   // at this point we have a valid config. Assign it to this
   xSemaphoreTake(configMutex, portMAX_DELAY);
-  this->Devices = newConfig.Devices;
-  this->Valves = newConfig.Valves;
-  this->Sequences = newConfig.Sequences;
-  this->Events = newConfig.Events;
-  this->Timezone = newConfig.Timezone;
+  // this->Devices = newConfig.Devices;
+  // this->Valves = newConfig.Valves;
+  // this->Sequences = newConfig.Sequences;
+  // this->Events = newConfig.Events;
+  // this->Timezone = newConfig.Timezone;
+  *this = newConfig;
   xSemaphoreGive(configMutex);
   return {};
 }

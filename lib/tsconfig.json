@@ -1,4 +1,5 @@
 {
+  "extends": "@tsconfig/node18/tsconfig.json",
   "compilerOptions": {
     /* Truncated compiler options to list only relevant options */
     "declaration": true,

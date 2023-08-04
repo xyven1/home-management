@@ -104,26 +104,25 @@
     </VOverlay>
   </VCarousel>
   <div
-    v-show="sliderActiveSwitch" class="slider" :style="{
-      top: sliderLocation?.y + 'px',
-      left: sliderLocation?.x + 'px'
-    }"
-    @pointermove.passive.capture="updateBrightness" @pointerup="closeSliderPopUp" @pointerleave="closeSliderPopUp"
+    v-show="sliderActiveSwitch" class="slider"
+    @pointermove.passive.capture="updateBrightness" @pointerup="closeSliderPopUp"
   >
     <div
       class="innerSlider" :style="{
-        background: `linear-gradient(to top, rgb(var(--v-theme-tertiary)), rgb(var(--v-theme-tertiary)) ${sliderBrightness}%, rgba(0,0,0,.5) ${sliderBrightness}%)`
+        background: `linear-gradient(to top, rgb(var(--v-theme-tertiary)), rgb(var(--v-theme-tertiary)) ${sliderBrightness}%, rgba(0,0,0,.5) ${sliderBrightness}%)`,
+        top: (sliderLocation?.y??0) + 'px',
+        left: (sliderLocation?.x??0) + 'px'
       }"
     />
   </div>
 </template>
 <script lang="ts" setup>
-import { Ref, ref } from "vue";
 import { useAppStore } from "@/store/app";
-import { Svg, Region, Switch } from "@home-management/lib/types/socket";
-import { storeToRefs } from "pinia";
-import { useDisplay } from 'vuetify'
 import { useLightsStore } from "@/store/lights";
+import { Region, SerialNumber, Svg, Switch } from "@home-management/lib/types/socket";
+import { storeToRefs } from "pinia";
+import { Ref, ref } from "vue";
+import { useDisplay } from 'vuetify';
 import { VCarousel, VOverlay } from "vuetify/lib/components/index.mjs";
 
 const { layer } = storeToRefs(useLightsStore());
@@ -147,7 +146,7 @@ async function getSwitch(r: Region) {
     brightness: res.value.brightness,
   };
 }
-async function toggle(sn: string, sw?: Switch) {
+async function toggle(sn: SerialNumber, sw?: Switch) {
   if (!sw) return;
   sw.state = 2;
   const res = await socket.emitWithAck("toggleSwitch", sn);
@@ -248,6 +247,8 @@ async function saveEdit(): Promise<void> {
 }
 
 // Brightness slider
+const sliderWidth = 32;
+const sliderHeight = 160;
 const sliderActiveSwitch = ref<Switch | null>(null);
 const sliderLocation = ref<{ x: number, y: number } | null>(null);
 const sliderBrightness = ref(0);
@@ -282,11 +283,11 @@ function handlePointerMove(event: PointerEvent, sw: Switch | undefined): void {
   if (sliderActiveSwitch.value) {
     updateBrightness(event);
   } else if (!sliderLocation.value) {
-    sliderLocation.value = { x: event.clientX, y: event.clientY - 160 * (.5 - sw.brightness / 100) };
+    sliderLocation.value = { x: event.clientX, y: event.clientY - sliderHeight * (.5 - sw.brightness / 100) };
     const carouselRect = carousel.value?.$el.getBoundingClientRect();
-    sliderLocation.value.y = Math.min(Math.max(sliderLocation.value.y, carouselRect.top + 95), carouselRect.bottom - 95);
-    sliderLocation.value.x = Math.min(Math.max(sliderLocation.value.x, carouselRect.left + 31), carouselRect.right - 31);
-  } else if (Math.abs(sliderLocation.value.y - event.clientY) > 10 && Math.abs(sliderLocation.value.x - event.clientX) < 20) {
+    sliderLocation.value.y = Math.min(Math.max(sliderLocation.value.y, carouselRect.top + (sliderHeight / 2 + 15)), carouselRect.bottom - (sliderHeight / 2 + 15));
+    sliderLocation.value.x = Math.min(Math.max(sliderLocation.value.x, carouselRect.left + (sliderWidth / 2 + 15)), carouselRect.right - (sliderWidth / 2 + 15));
+  } else if (Math.abs(sliderLocation.value.y - event.clientY) > 15 && Math.abs(sliderLocation.value.x - event.clientX) < 20) {
     sliderBrightness.value = sw.brightness ?? 0;
     sliderActiveSwitch.value = sw;
     sliderSendingBrightness.value = false;
@@ -300,32 +301,32 @@ function handlePointerMove(event: PointerEvent, sw: Switch | undefined): void {
   height: 100% !important;
 
   svg {
-    touch-action: none;
+    touch-action: manipulation;
     height: 100%;
     width: 100% !important;
   }
 
   svg > path {
-    touch-action: auto !important;
+    touch-action: manipulation !important;
   }
 }
 
 .slider {
-  touch-action: auto !important;
+  touch-action: manipulation !important;
   position: absolute;
-  width: 200vw;
-  height: 200vh;
-  margin-left: -100vw;
-  margin-top: -100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1000;
 }
 
 .innerSlider {
-  width: 32px;
-  height: 160px;
+  position: absolute;
+  width: v-bind('sliderWidth + "px"');
+  height: v-bind('sliderHeight + "px"');
+  margin-top: v-bind('-sliderHeight / 2  + "px"');
+  margin-left: v-bind('-sliderWidth / 2  + "px"');
   border-radius: 16px;
   box-shadow: 0px 0px 25px 25px rgba(0, 0, 0, .5);
 }

@@ -294,10 +294,14 @@ export default (io: AppServer): void => {
         if (region === undefined) throw new Error("Region not found");
         region.sn = data.sn;
         fs.writeFileSync(svgPath, JSON.stringify(svg, null, 2));
-        wsCallback(true);
-      } catch (err) {
+        wsCallback({ ok: true });
+      } catch (err: any) {
         console.error(err);
-        wsCallback(false);
+        if (err instanceof Error)
+          wsCallback({
+            ok: false,
+            err: err instanceof Error ? err.message : String(err),
+          });
       }
     });
   });

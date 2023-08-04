@@ -5,40 +5,79 @@
         <VCol :cols="cols">
           <VCard title="Events" variant="tonal">
             <VCardText>
-              <VExpansionPanels v-model="panel">
-                <VExpansionPanel v-for="(event, i) of config.events" :key="i">
+              <VExpansionPanels v-model="selectedEvent">
+                <VExpansionPanel v-for="(event, i) of config.events" :key="i" eager>
                   <VExpansionPanelTitle>
-                    Event: {{ event.name }}
+                    <div class="text-body-1">
+                      {{ event.name }}
+                    </div>
                     <VSpacer />
                     <VBtn
-                      icon="mdi-delete" color="error" class="expansion-delete" variant="text"
+                      icon="mdi-delete" color="error" class="ma-n3" variant="text"
                       @click="config.events.splice(i, 1)"
                     />
                   </VExpansionPanelTitle>
                   <VExpansionPanelText>
-                    <VTextField v-model="event.name" label="Name" />
-                    <VSelect
-                      v-model="event.sequenceID" :items="config.sequences" label="Sequence"
-                      :item-value="item => item.id" :item-title="item => item.name"
-                      :rules="[v => !!v || 'Required', v => !!config.sequences.find(s => s.id === v) || 'Not a valid sequence id']"
-                      validate-on="input"
-                    />
-                    <VTextField v-model="event.priority" type="number" label="Priority" />
-                    <div class="d-flex flex-wrap justify-center">
-                      <VDatePicker
-                        v-model="getStartingDateComputed(event).value" title="Starting on:" color="primary"
-                        show-adjacent-months hide-actions class="mt-1"
-                      />
-                      <VDatePicker
-                        v-model="getEndingDateComputed(event).value" title="Ending on:" color="primary"
-                        show-adjacent-months hide-actions class="ma-1"
-                      />
-                    </div>
-                    <VChipGroup v-model="getWeekDayComputed(event).value" multiple filter>
-                      <VChip
-                        v-for="(day, dayIndex) of daysOfWeek" :key="dayIndex" color="primary"
-                        @group:selected="thing => event.days[dayIndex] = thing.value"
-                      >
+                    <VRow>
+                      <VCol class="pa-2">
+                        <VTextField v-model="event.name" label="Name" hide-details="auto" />
+                      </VCol>
+                    </VRow>
+                    <VRow>
+                      <VCol class="pa-2" :cols="cardWidth < 550 ? 12 : 9">
+                        <VSelect
+                          v-model="event.sequenceID" :items="config.sequences" label="Sequence" hide-details="auto"
+                          :item-value="item => item.id" :item-title="item => item.name"
+                          :rules="[v => !!v || 'Required', v => !!config.sequences.find(s => s.id === v) || 'Not a valid sequence id']"
+                          validate-on="input"
+                        />
+                      </VCol>
+                      <VCol class="pa-2" :cols="cardWidth < 550 ? 12 : 3">
+                        <VTextField
+                          :model-value="event.priority" type="number" hide-details="auto" validate-on="input"
+                          label="Priority" :min="Irrigation.toEventPriority(-Infinity)" :max="1000000"
+                          @update:model-value="v => Irrigation.toEventPriority(v)"
+                        />
+                      </VCol>
+                    </VRow>
+                    <VRow>
+                      <VCol class="pa-2">
+                        <VTextField
+                          :model-value="Math.floor(event.startOffset / 60)" type="number" hide-details="auto"
+                          validate-on="input" label="Start Offset (m)" :min="Irrigation.Offset(Infinity)"
+                          :max="Irrigation.Offset(-Infinity)"
+                          @update:model-value="v => event.startOffset = Irrigation.Offset(60 * Number(v))"
+                        />
+                      </VCol>
+                    </VRow>
+                    <VRow>
+                      <VCol align="center">
+                        <VDatePicker
+                          :model-value="[new Date(event.start * 1000)]" title="Starting on:" color="primary"
+                          show-adjacent-months hide-actions class="mt-1" @update:model-value="(value) => {
+                            if (value instanceof Date)
+                              event.start = Irrigation.TimeT(value.getTime() / 1000);
+                          }"
+                        />
+                      </VCol>
+                      <VCol align="center">
+                        <VDatePicker
+                          :model-value="[new Date(event.end * 1000)]" title="Ending on:" color="primary"
+                          show-adjacent-months hide-actions class="ma-1 " @update:model-value="(value) => {
+                            if (value instanceof Date)
+                              event.end = Irrigation.TimeT(value.getTime() / 1000);
+                          }"
+                        />
+                      </VCol>
+                    </VRow>
+                    <VChipGroup
+                      :model-value="event.days.flatMap((v, i) => v ? [i] : [])" multiple filter
+                      @update:model-value="(value: number[]) => {
+                        event.days.fill(false);
+                        value.filter(v => v >= 0 && v < 7).forEach(v => event.days[v] = true);
+                      }"
+                    >
+                      <VChip v-for="(day, dayIndex) of daysOfWeek" :key="dayIndex" color="primary">
                         {{ day }}
                       </VChip>
                     </VChipGroup>
@@ -53,15 +92,28 @@
           </VCard>
         </VCol>
         <VCol :cols="cols">
-          <VCard title="Sequences" variant="tonal">
+          <VCard
+            ref="sequences" v-resize="() => cardWidth = sequences?.$el.offsetWidth" title="Sequences"
+            variant="tonal"
+          >
             <VCardText>
-              <VExpansionPanels>
-                <VExpansionPanel v-for="(sequence, i) of config.sequences" :key="i">
+              <VExpansionPanels v-model="selectedSequence">
+                <VExpansionPanel v-for="(sequence, i) of config.sequences" :key="i" eager>
                   <VExpansionPanelTitle>
-                    Sequence: {{ sequence.name }}
+                    <VSwitch
+                      density="compact" color="primary" hide-details="auto" class="ma-n3 flex-grow-0" inset
+                      style="min-width: 48px" :model-value="stateSequences.has(sequence.id)" @click.stop
+                      @update:model-value="v => {
+                        if (v) startSequence(sequence.id);
+                        else stopSequence(sequence.id);
+                      }"
+                    />
+                    <div class="pl-6 text-body-1">
+                      {{ sequence.name }}
+                    </div>
                     <VSpacer />
                     <VBtn
-                      icon="mdi-delete" color="error" class="expansion-delete" variant="text"
+                      icon="mdi-delete" color="error" class="ma-n3" variant="text"
                       @click="config.sequences.splice(i, 1)"
                     />
                   </VExpansionPanelTitle>
@@ -72,30 +124,39 @@
                     <VRow v-for="(job, jI) of sequence.jobs" :key="jI">
                       <VCol>
                         <VRow>
-                          <VCol :cols="xs ? 12 : 9" class="pa-1">
+                          <VCol class="pa-1" :cols="cardWidth < 525 ? 12 : 9">
                             <VSelect
                               v-model="job.valveIDs" density="compact" :items="config.valves" label="Valves"
                               multiple chips closable-chips hide-details="auto" :item-value="item => item.id"
                               :item-title="item => item.name"
                             />
                           </VCol>
-                          <VCol :cols="xs ? 12 : 3" class="pa-1">
+                          <VCol class="pa-1" :cols="cardWidth < 525 ? 12 : 3">
                             <VTextField
-                              v-model="job.duration" density="compact" label="Duration" type="number"
-                              hide-details="auto"
+                              :model-value="Math.floor(job.duration / 60)" density="compact"
+                              label="Duration (m)" type="number" hide-details="auto" :min="1" :max="60 * 24"
+                              validate-on="input"
+                              @update:model-value="v => job.duration = 60 * Math.max(1, Math.min(1440, Number(v)))"
                             />
                           </VCol>
                         </VRow>
                       </VCol>
                       <VCol align-self="center" class="flex-grow-0 pa-0">
-                        <VSpacer />
                         <VBtn
-                          icon="mdi-delete" color="error" class="expansion-delete" variant="text"
+                          icon="mdi-delete" color="error" class="ma-n1" variant="text"
                           @click="sequence.jobs.splice(jI, 1)"
                         />
                       </VCol>
                     </VRow>
-                    <VRow>
+                    <VRow align="center">
+                      <span class="text-center text-body-1 px-2">
+                        {{ (() => {
+                          let state = stateSequences.get(sequence.id);
+                          if (!state) return 'Stopped';
+                          else return state.startType === 'manual' ? 'Manually Started: ' + new Date(state.startTimestamp *
+                            1000).toLocaleString() : 'Scheduled';
+                        })() }}
+                      </span>
                       <VSpacer />
                       <VBtn
                         icon="mdi-plus" color="primary" variant="flat"
@@ -115,14 +176,22 @@
         <VCol :cols="cols">
           <VCard title="Valves" variant="tonal">
             <VCardText>
-              <VExpansionPanels>
-                <VExpansionPanel v-for="(valve, i) of config.valves" :key="i">
+              <VExpansionPanels v-model="selectedValve">
+                <VExpansionPanel v-for="(valve, i) of config.valves" :key="i" eager>
                   <VExpansionPanelTitle>
-                    {{ valve.name }} | Device: {{ config.devices.find(v => v.id ==
-                      valve.deviceID)?.name ?? "Unknown" }}, Relay: {{ valve.relay }}
+                    <VSwitch
+                      density="compact" color="primary" hide-details class="ma-n3 flex-grow-0" inset
+                      style="min-width: 48px" :model-value="stateValves.has(valve.id)" @click.stop @update:model-value="v => {
+                        if (v) startValve(valve.id);
+                        else stopValve(valve.id);
+                      }"
+                    />
+                    <div class="pl-6 text-body-1">
+                      {{ valve.name }}
+                    </div>
                     <VSpacer />
                     <VBtn
-                      icon="mdi-delete" color="error" class="expansion-delete" variant="text"
+                      icon="mdi-delete" color="error" class="ma-n3" variant="text"
                       @click="config.valves.splice(i, 1)"
                     />
                   </VExpansionPanelTitle>
@@ -155,13 +224,27 @@
         <VCol :cols="cols">
           <VCard title="Devices" variant="tonal">
             <VCardText>
-              <VExpansionPanels>
-                <VExpansionPanel v-for="(device, i) of config.devices" :key="i">
+              <VExpansionPanels v-model="selectedDevice">
+                <VExpansionPanel v-for="(device, i) of config.devices" :key="i" eager>
                   <VExpansionPanelTitle>
-                    {{ device.name }} | MAC: {{ device.mac }}
+                    <div class="text-center">
+                      {{ device.name }}
+                    </div>
+                    <span v-if="stateDevices.has(device.mac)">
+                      <VBtn
+                        class="text-decoration-underline px-2 my-n2" color="primary" variant="text"
+                        :href="`http://${stateDevices.get(device.mac)?.ip}`" @click.stop
+                      >{{
+                        stateDevices.get(device.mac)?.ip }}</VBtn>
+                    </span>
+                    <template v-else>
+                      <div class="px-2 my-n2 py-0 text-center">
+                        Not Connected
+                      </div>
+                    </template>
                     <VSpacer />
                     <VBtn
-                      icon="mdi-delete" color="error" class="expansion-delete" variant="text"
+                      icon="mdi-delete" color="error" class="ma-n3" variant="text"
                       @click="config.devices.splice(i, 1)"
                     />
                   </VExpansionPanelTitle>
@@ -171,7 +254,8 @@
                       :rules="[(v: string) => (v != null && /\S/.test(v)) || 'Required']" validate-on="input" clearable
                     />
                     <VSelect
-                      v-model="device.mac" :items="devices.filter(d => !config.devices.find(d2 => d2.mac == d))"
+                      v-model="device.mac"
+                      :items="[...stateDevices.values()].filter(d => !config.devices.find(d2 => d2.mac === d.mac))"
                       label="Device" :rules="[v => !!v || 'Required']" validate-on="input"
                       no-data-text="No other devices found"
                     />
@@ -179,9 +263,16 @@
                 </VExpansionPanel>
               </VExpansionPanels>
             </VCardText>
-            <VCardActions>
-              <v-spacer />
-              <VBtn icon="mdi-plus" color="primary" variant="flat" @click="createDevice" />
+            <VCardActions class="d-flex flex-wrap justify-center">
+              <VChip
+                v-for="([id, device]) of [...stateDevices].filter(([_, d]) => !config.devices.find(d2 => d2.mac === d.mac))"
+                :key="id" append-icon="mdi-plus" color="primary" variant="flat" class="ma-1" @click="() => {
+                  createDevice(device.mac);
+                  selectedDevice = config.devices.length - 1;
+                }"
+              >
+                {{ device.ip }}
+              </VChip>
             </VCardActions>
           </VCard>
         </VCol>
@@ -202,11 +293,19 @@
 <script setup lang="ts">
 import { useAppStore } from "@/store/app";
 import * as Irrigation from "@home-management/lib/types/irrigationConfig.ts";
-import { computed, ref } from "vue";
+import { Ref, computed, ref } from "vue";
+import { VCard } from "vuetify/lib/components/index.mjs";
 import { SubmitEventPromise, useDisplay } from "vuetify/lib/framework.mjs";
+
+// Layout
+const { smAndDown, md, lg, xlAndUp } = useDisplay()
+const cols = computed(() => smAndDown.value ? 12 : md.value ? 6 : lg.value ? 4 : xlAndUp.value ? 3 : 12);
+const sequences = ref<VCard | undefined>();
+const cardWidth = ref(0);
 const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+// Config syncing
 const { socket } = useAppStore();
-const devices = ref<string[]>([]);
 const config = ref<Irrigation.Config>({
   events: [],
   sequences: [],
@@ -214,43 +313,73 @@ const config = ref<Irrigation.Config>({
   devices: [],
   timezone: "",
 });
-
-const { xs, smAndDown, md, lg, xlAndUp } = useDisplay()
-const cols = computed(() => smAndDown.value ? 12 : md.value ? 6 : lg.value ? 4 : xlAndUp.value ? 3 : 12);
-
-socket.on("irrigationConfigChange", (cfg) => {
+const updateConfig = (cfg: Irrigation.Config) => {
   config.value = cfg;
-});
-socket.on("newIrrigationDevice", (mac: string) => {
-  devices.value.push(mac);
-});
-socket.emitWithAck("getIrrigationConfig").then((cfg) => {
-  config.value = cfg;
-});
+};
+socket.on("irrigationConfigChange", updateConfig);
+socket.emitWithAck("getIrrigationConfig").then(updateConfig);
 
-socket.emitWithAck("getIrrigationDevices").then((res) => {
-  devices.value.push(...res);
-})
+// State syncing
+const stateSequences = ref<Map<Irrigation.SequenceID, Irrigation.SequenceExecution>>(new Map());
+const stateValves = ref<Map<Irrigation.ValveID, Irrigation.ValveExecution>>(new Map());
+const stateDevices = ref<Map<string, Irrigation.DeviceConnection>>(new Map());
+const updateState = (state: Irrigation.State) => {
+  stateSequences.value = new Map(Object.entries(state.sequences).map(([k, v]) => [Irrigation.SequenceID(k), v]));
+  stateValves.value = new Map(Object.entries(state.valves).map(([k, v]) => [Irrigation.ValveID(k), v]));
+  stateDevices.value = new Map(Object.entries(state.devices));
+};
+socket.on("irrigationStateChange", updateState);
+socket.emitWithAck("getIrrigationState").then(updateState)
+
+// State actions
+async function startSequence(id: Irrigation.SequenceID) {
+  const res = await socket.emitWithAck("setIrrigationSequenceState", id, true);
+  if (res.ok)
+    stateSequences.value.set(id, res.value!);
+}
+async function stopSequence(id: Irrigation.SequenceID) {
+  const res = await socket.emitWithAck("setIrrigationSequenceState", id, false);
+  if (res)
+    stateSequences.value.delete(id);
+}
+async function startValve(id: Irrigation.ValveID) {
+  const res = await socket.emitWithAck("setIrrigationValveState", id, true, -1);
+  if (res.ok)
+    stateValves.value.set(id, res.value!);
+}
+async function stopValve(id: Irrigation.ValveID) {
+  const res = await socket.emitWithAck("setIrrigationValveState", id, false, -1);
+  if (res.ok)
+    stateValves.value.delete(id);
+}
+
+// Config editing
+const saving = ref(false);
+const errorSaving = ref(false);
+const selectedEvent: Ref<number | undefined> = ref(undefined);
+const selectedSequence: Ref<number | undefined> = ref(undefined);
+const selectedValve: Ref<number | undefined> = ref(undefined);
+const selectedDevice: Ref<number | undefined> = ref(undefined);
 
 function createEvent() {
   //find the first unused id starting at 1
-  let id = 1;
+  let id = Irrigation.EventID(1);
   while (config.value.events.find((seq) => seq.id === id))
     id++;
   config.value.events.push({
     name: "",
-    sequenceID: 0,
+    sequenceID: Irrigation.SequenceID(0),
     days: [false, false, false, false, false, false, false],
     id,
-    priority: 0,
-    start: Date.now() / 1000,
-    end: Date.now() / 1000,
+    priority: Irrigation.toEventPriority(0),
+    start: Irrigation.TimeT(Date.now() / 1000),
+    end: Irrigation.TimeT(Date.now() / 1000),
     startOffset: 0,
   });
 }
 function createSequence() {
   //find the first unused id starting at 1
-  let id = 1;
+  let id = Irrigation.SequenceID(1);
   while (config.value.sequences.find((seq) => seq.id === id))
     id++;
   config.value.sequences.push({
@@ -261,30 +390,27 @@ function createSequence() {
 }
 function createValve() {
   //find the first unused id starting at 1
-  let id = 1;
+  let id = Irrigation.ValveID(1);
   while (config.value.valves.find((seq) => seq.id === id))
     id++;
   config.value.valves.push({
     name: "Valve " + id.toString(),
     id,
-    deviceID: 0,
+    deviceID: Irrigation.DeviceID(0),
     relay: 0,
   });
 }
-function createDevice() {
+function createDevice(mac: string = "") {
   //find the first unused id starting at 1
-  let id = 1;
+  let id = Irrigation.DeviceID(1);
   while (config.value.devices.find((seq) => seq.id === id))
     id++;
   config.value.devices.push({
     name: "Device " + id.toString(),
     id,
-    mac: "",
+    mac,
   });
 }
-// editing
-const saving = ref(false);
-const errorSaving = ref(false);
 async function saveConfig(event: SubmitEventPromise) {
   saving.value = true;
   const res = await event;
@@ -300,52 +426,9 @@ async function saveConfig(event: SubmitEventPromise) {
   }
   saving.value = false;
 }
-
-//event editing
-const panel = ref<number | undefined>();
-function getStartingDateComputed(event: Irrigation.Event) {
-  return computed({
-    get() {
-      return [new Date(event.start * 1000)];
-    },
-    set(value: any[] | undefined) {
-      if (value instanceof Date)
-        event.start = value.getTime() / 1000;
-    }
-  })
-}
-function getEndingDateComputed(event: Irrigation.Event) {
-  return computed({
-    get() {
-      return [new Date(event.end * 1000)];
-    },
-    set(value: any[] | undefined) {
-      if (value instanceof Date)
-        event.end = value.getTime() / 1000;
-    }
-  })
-}
-function getWeekDayComputed(event: Irrigation.Event) {
-  return computed({
-    get() {
-      return event.days.flatMap((v, i) => v ? [i] : []);
-    },
-    set(value: number[]) {
-      event.days.fill(false);
-      for (const day of value)
-        event.days[day] = true;
-    }
-  })
-}
-
 </script>
 
 <style scoped>
-.expansion-delete {
-  margin-top: -3em;
-  margin-bottom: -3em;
-}
-
 .v-date-picker {
   background-color: color-mix(in oklab, rgb(var(--v-theme-surface)), rgb(var(--v-theme-surface-variant), .1));
 }
