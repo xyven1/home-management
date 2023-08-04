@@ -48,6 +48,8 @@ if (!fs.existsSync(configJson))
   fs.writeFileSync(configJson, JSON.stringify(config, null, 2));
 else config = JSON.parse(fs.readFileSync(configJson, "utf-8"));
 
+const id = Math.floor(Math.random() * 65536);
+
 function query(): void {
   mdns.query({
     questions: [
@@ -56,6 +58,7 @@ function query(): void {
         type: "A",
       },
     ],
+    id,
   });
 }
 
@@ -93,7 +96,7 @@ export default (io: AppServer): void => {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(getState()),
+          body: JSON.stringify(getState(true)),
         });
         if (!stateRes.ok)
           console.error(
