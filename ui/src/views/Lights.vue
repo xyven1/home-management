@@ -331,4 +331,10 @@ function handlePointerMove(event: PointerEvent, sw: Switch | undefined): void {
   border-radius: 16px;
   box-shadow: 0px 0px 25px 25px rgba(0, 0, 0, .5);
 }
+.v-carousel__controls {
+  pointer-events: none;
+  button {
+    pointer-events: auto;
+  }
+}
 </style>
