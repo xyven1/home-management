@@ -80,7 +80,13 @@ export default (io: AppServer): void => {
           },
           body: JSON.stringify(config),
         });
-        if (!configRes.ok) console.error("Failed to send config to", a.data);
+        if (!configRes.ok)
+          console.error(
+            "Failed to send config to",
+            a.data,
+            configRes.status,
+            await configRes.text()
+          );
         // send state
         const stateRes = await fetch(`http://${a.data}/api/state`, {
           method: "POST",
