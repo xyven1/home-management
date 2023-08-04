@@ -77,10 +77,6 @@ export default (io: AppServer): void => {
       console.log("statechange", client.device.friendlyName, value);
       io.emit("stateChange", client.device.serialNumber, Number(value));
     });
-    client.on("brightness", (value) => {
-      console.log("brightnesschange", client.device.friendlyName, value);
-      io.emit("brightnessChange", client.device.serialNumber, +value);
-    });
   }
 
   // discovers wemo devices connected to network
@@ -192,9 +188,13 @@ export default (io: AppServer): void => {
                 state.brightness != null ? Number(state.brightness) : undefined,
             },
           });
-          socket.emit("stateChange", serialNumber, state.BinaryState);
+          socket.broadcast.emit("stateChange", serialNumber, state.BinaryState);
           if (state.brightness != null)
-            socket.emit("brightnessChange", serialNumber, state.brightness);
+            socket.broadcast.emit(
+              "brightnessChange",
+              serialNumber,
+              state.brightness
+            );
         } catch (err: any) {
           wsCallback({ ok: false, err: err.message ?? err });
         }
@@ -227,9 +227,13 @@ export default (io: AppServer): void => {
                     : undefined,
               },
             });
-            socket.emit("stateChange", serialNumber, newState.BinaryState);
+            socket.broadcast.emit(
+              "stateChange",
+              serialNumber,
+              newState.BinaryState
+            );
             if (newState.brightness != null)
-              socket.emit(
+              socket.broadcast.emit(
                 "brightnessChange",
                 serialNumber,
                 newState.brightness
@@ -248,10 +252,22 @@ export default (io: AppServer): void => {
         const device = devices.get(serialNumber);
         if (device !== undefined) {
           try {
+            const res = (await device.setBrightness(brightness)) as {
+              BinaryState: string;
+              brightness: string;
+            };
             wsCallback({
               ok: true,
-              value: await device.setBrightness(brightness),
+              value: {
+                BinaryState: Number(res.BinaryState),
+                brightness: Number(res.brightness),
+              },
             });
+            socket.broadcast.emit(
+              "brightnessChange",
+              serialNumber,
+              Number(res.brightness)
+            );
           } catch (err: any) {
             wsCallback({ ok: false, err: err.message ?? err });
           }

@@ -39,7 +39,9 @@ app.use(express.static(process.env.DIST_PATH ?? defaultDistPath));
 app.get(/.*/, (req, res) => {
   res.sendFile(
     path.join(
-      process.env.DIST_PATH ?? path.join(path.resolve(), defaultDistPath),
+      process.env.DIST_PATH !== undefined
+        ? path.join(path.resolve(), process.env.DIST_PATH)
+        : path.join(path.resolve(), defaultDistPath),
       "index.html"
     )
   );
@@ -53,11 +55,10 @@ io.on("connection", (socket) => {
   });
 });
 
+const port = process.env.SERVER_PORT ?? 43434;
 // initilize server
-server.listen(process.env.SERVER_PORT, () => {
-  console.log(
-    `app listening at http://localhost:${process.env.SERVER_PORT ?? 3000}`
-  );
+server.listen(port, () => {
+  console.log(`app listening at http://localhost:${port}`);
 });
 
 manageLights(io);

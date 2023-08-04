@@ -105,7 +105,7 @@
   </VCarousel>
   <div
     v-show="sliderActiveSwitch" class="slider"
-    @pointermove.passive.capture="updateBrightness" @pointerup="closeSliderPopUp"
+    @pointermove.passive.capture="updateBrightness" @pointerup="closeSliderPopUp" @pointerleave="closeSliderPopUp"
   >
     <div
       class="innerSlider" :style="{
@@ -256,11 +256,10 @@ const sliderBrightness = ref(0);
 const sliderSendingBrightness = ref(false);
 
 async function closeSliderPopUp(p: PointerEvent): Promise<void> {
-  console.log(p);
   if (!sliderActiveSwitch.value || sliderSendingBrightness.value) return;
   sliderSendingBrightness.value = true;
   try {
-    const res = await socket.emitWithAck("setBrightness", sliderActiveSwitch.value.serialNumber, sliderBrightness.value)
+    const res = await socket.timeout(3000).emitWithAck("setBrightness", sliderActiveSwitch.value.serialNumber, sliderBrightness.value)
     if (res.ok) {
       sliderActiveSwitch.value.brightness = res.value.brightness;
       sliderActiveSwitch.value.state = res.value.BinaryState;
@@ -281,7 +280,7 @@ function updateBrightness(event: PointerEvent): void {
 }
 
 function handlePointerMove(event: PointerEvent, sw: Switch | undefined): void {
-  if (event.type !== "pointermove" || event.pressure <= 0 || sw === undefined || !sw.brightness || isNaN(sw.brightness)) return;
+  if (event.type !== "pointermove" || event.buttons <= 0 || sw === undefined || !sw.brightness || isNaN(sw.brightness)) return;
   if (sliderActiveSwitch.value) {
     updateBrightness(event);
   } else if (!sliderLocation.value || !originalClientLocation.value) {
@@ -290,13 +289,12 @@ function handlePointerMove(event: PointerEvent, sw: Switch | undefined): void {
     const carouselRect = carousel.value?.$el.getBoundingClientRect();
     sliderLocation.value.y = Math.min(Math.max(sliderLocation.value.y, carouselRect.top + (sliderHeight / 2 + 15)), carouselRect.bottom - (sliderHeight / 2 + 15));
     sliderLocation.value.x = Math.min(Math.max(sliderLocation.value.x, carouselRect.left + (sliderWidth / 2 + 15)), carouselRect.right - (sliderWidth / 2 + 15));
-  } else if (Math.abs(originalClientLocation.value.y - event.clientY) > 10 && Math.abs(originalClientLocation.value.x - event.clientX) < 20) {
+  } else if (Math.abs(originalClientLocation.value.y - event.clientY) > 10 && Math.abs(originalClientLocation.value.x - event.clientX) < 10) {
     sliderBrightness.value = sw.brightness ?? 0;
     sliderActiveSwitch.value = sw;
     sliderSendingBrightness.value = false;
   }
 }
-
 </script>
 
 <style lang="scss">

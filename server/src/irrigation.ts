@@ -1,4 +1,4 @@
-import type * as Irrigation from "@home-management/lib/types/irrigationConfig.js";
+import * as Irrigation from "@home-management/lib/types/irrigationConfig.js";
 import fs from "fs";
 import mdnsCreate from "multicast-dns";
 import fetch from "node-fetch";
@@ -69,6 +69,7 @@ export default (io: AppServer): void => {
     response.answers.forEach((a) => {
       (async () => {
         if (a.type !== "A" || !a.name.startsWith(hostname)) return;
+        console.log("TTL:", a.ttl);
         const macRes = await fetch(`http://${a.data}/mac`);
         if (!macRes.ok) return;
         const macText = await macRes.text();
@@ -108,6 +109,79 @@ export default (io: AppServer): void => {
       })().finally(() => {});
     });
   });
+
+  function eventIsRunning(event: Irrigation.Event, now: Date): boolean {
+    const millis = Math.floor(now.getTime() / 1000);
+    if (millis < event.start || millis > event.end || !event.days[now.getDay()])
+      return false;
+    const offset =
+      now.getHours() * 3600 +
+      now.getMinutes() * 60 +
+      now.getSeconds() -
+      event.startOffset;
+    const sequence = config.sequences.find((s) => s.id === event.sequenceID);
+    if (sequence === undefined) return false;
+    return sequenceIsRunning(sequence, offset);
+  }
+  function sequenceIsRunning(
+    sequence: Irrigation.Sequence,
+    offset: number
+  ): boolean {
+    if (offset < 0) return false;
+    for (const job of sequence.jobs) {
+      offset -= job.duration;
+      if (offset < 0) return true;
+    }
+    return false;
+  }
+  // handle scheduled events
+  setInterval(() => {
+    const now = new Date();
+    let dirty = false;
+    for (const event of config.events) {
+      if (sequences.get(event.sequenceID)?.startType === "manual") continue;
+      const running = eventIsRunning(event, now);
+      if (running && sequences.has(event.sequenceID)) continue;
+      if (!running && !sequences.has(event.sequenceID)) continue;
+      if (running) {
+        sequences.set(event.sequenceID, {
+          sequenceID: event.sequenceID,
+          currentJob: 0,
+          startType: "scheduled",
+          eventID: event.id,
+        });
+      } else sequences.delete(event.sequenceID);
+      dirty = true;
+    }
+    if (dirty) io.emit("irrigationStateChange", getState());
+  }, 1000);
+  // cleanup expired manual events
+  setInterval(() => {
+    const millis = Math.round(Date.now() / 1000);
+    let dirty = false;
+    for (const [id, sequenceExecution] of sequences.entries()) {
+      if (sequenceExecution.startType !== "manual") continue;
+      const sequence = config.sequences.find((s) => s.id === id);
+      if (sequence === undefined) continue;
+      if (
+        sequenceIsRunning(sequence, millis - sequenceExecution.startTimestamp)
+      )
+        continue;
+      sequences.delete(id);
+      dirty = true;
+    }
+    for (const [id, valveExecution] of valves.entries()) {
+      if (valveExecution.duration === -1) continue;
+      const valve = config.valves.find((v) => v.id === id);
+      if (valve === undefined) continue;
+      if (valveExecution.startTimestamp + valveExecution.duration > millis)
+        continue;
+      valves.delete(id);
+      dirty = true;
+    }
+    if (dirty) handleManualStatusUpdate().finally(() => {});
+  }, 1000);
+
   async function handleManualStatusUpdate(
     socket:
       | Socket<
@@ -136,7 +210,6 @@ export default (io: AppServer): void => {
       )
     ).every((s) => s.status === "fulfilled");
   }
-
   async function handleNewConfig(
     newConfig: Irrigation.Config,
     socket:
@@ -149,7 +222,11 @@ export default (io: AppServer): void => {
       | undefined = undefined
   ): Promise<boolean> {
     config = newConfig;
-    fs.writeFileSync(configJson, JSON.stringify(config, null, 2));
+    try {
+      fs.writeFileSync(configJson, JSON.stringify(config, null, 2));
+    } catch (e) {
+      console.error("Write error", e);
+    }
     if (socket != null) socket.broadcast.emit("irrigationConfigChange", config);
     else io.emit("irrigationConfigChange", config);
     const settled = await Promise.allSettled(
@@ -255,8 +332,9 @@ export default (io: AppServer): void => {
         if (state) {
           newSequenceExecution = {
             sequenceID,
-            startTimestamp: Math.floor(Date.now() / 1000),
+            currentJob: 0,
             startType: "manual",
+            startTimestamp: Irrigation.TimeT(Math.floor(Date.now() / 1000)),
           };
           sequences.set(sequenceID, newSequenceExecution);
         } else sequences.delete(sequenceID);
@@ -269,79 +347,5 @@ export default (io: AppServer): void => {
         else wsCallback({ ok: true, value: newSequenceExecution ?? null });
       }
     );
-    function eventIsRunning(event: Irrigation.Event, now: Date): boolean {
-      const millis = Math.floor(now.getTime() / 1000);
-      if (
-        millis < event.start ||
-        millis > event.end ||
-        !event.days[now.getDay()]
-      )
-        return false;
-      const offset =
-        now.getHours() * 3600 +
-        now.getMinutes() * 60 +
-        now.getSeconds() -
-        event.startOffset;
-      const sequence = config.sequences.find((s) => s.id === event.sequenceID);
-      if (sequence === undefined) return false;
-      return sequenceIsRunning(sequence, offset);
-    }
-    function sequenceIsRunning(
-      sequence: Irrigation.Sequence,
-      offset: number
-    ): boolean {
-      if (offset < 0) return false;
-      for (const job of sequence.jobs) {
-        offset -= job.duration;
-        if (offset < 0) return true;
-      }
-      return false;
-    }
-    // handle scheduled events
-    setInterval(() => {
-      const now = new Date();
-      let dirty = false;
-      for (const event of config.events) {
-        if (sequences.get(event.sequenceID)?.startType === "manual") continue;
-        const running = eventIsRunning(event, now);
-        if (running && sequences.has(event.sequenceID)) continue;
-        if (!running && !sequences.has(event.sequenceID)) continue;
-        if (running) {
-          sequences.set(event.sequenceID, {
-            sequenceID: event.sequenceID,
-            startTimestamp: Math.floor(now.getTime() / 1000),
-            startType: "scheduled",
-          });
-        } else sequences.delete(event.sequenceID);
-        dirty = true;
-      }
-      if (dirty) io.emit("irrigationStateChange", getState());
-    }, 1000);
-    // cleanup expired manual events
-    setInterval(() => {
-      const millis = Math.round(Date.now() / 1000);
-      let dirty = false;
-      for (const [id, sequenceExecution] of sequences.entries()) {
-        if (sequenceExecution.startType !== "manual") continue;
-        const sequence = config.sequences.find((s) => s.id === id);
-        if (sequence === undefined) continue;
-        if (
-          sequenceIsRunning(sequence, millis - sequenceExecution.startTimestamp)
-        )
-          continue;
-        sequences.delete(id);
-        dirty = true;
-      }
-      for (const [id, valveExecution] of valves.entries()) {
-        if (valveExecution.duration === -1) continue;
-        const valve = config.valves.find((v) => v.id === id);
-        if (valve === undefined) continue;
-        if (valveExecution.startTimestamp + valveExecution.duration > millis)
-          continue;
-        valves.delete(id);
-        dirty = true;
-      }
-      if (dirty) handleManualStatusUpdate().finally(() => {});
-    });
   });
 };

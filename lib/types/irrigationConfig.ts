@@ -92,13 +92,25 @@ export interface DeviceConnection {
   ip: string;
 }
 
-export interface SequenceExecution {
+export type SequenceExecutionType = "manual" | "scheduled";
+export interface SequenceExecutionBase<T extends SequenceExecutionType> {
   sequenceID: SequenceID;
-  /** Seconds since epoch */
-  startTimestamp: number;
+  currentJob: number;
   /** How the execution was started */
-  startType: "manual" | "scheduled";
+  startType: T;
 }
+export interface SequenceExecutionManual
+  extends SequenceExecutionBase<"manual"> {
+  startTimestamp: TimeT;
+}
+export interface SequenceExecutionScheduled
+  extends SequenceExecutionBase<"scheduled"> {
+  /** The event that started the execution */
+  eventID: EventID;
+}
+export type SequenceExecution =
+  | SequenceExecutionManual
+  | SequenceExecutionScheduled;
 
 export interface ValveExecution {
   valveID: ValveID;
