@@ -251,6 +251,7 @@ const sliderWidth = 32;
 const sliderHeight = 160;
 const sliderActiveSwitch = ref<Switch | null>(null);
 const sliderLocation = ref<{ x: number, y: number } | null>(null);
+const originalClientLocation = ref<{ x: number, y: number } | null>(null);
 const sliderBrightness = ref(0);
 const sliderSendingBrightness = ref(false);
 
@@ -267,6 +268,7 @@ async function closeSliderPopUp(p: PointerEvent): Promise<void> {
   } finally {
     sliderActiveSwitch.value = null;
     sliderLocation.value = null;
+    originalClientLocation.value = null;
     sliderSendingBrightness.value = false;
   }
 }
@@ -282,12 +284,13 @@ function handlePointerMove(event: PointerEvent, sw: Switch | undefined): void {
   if (event.type !== "pointermove" || event.pressure <= 0 || sw === undefined || !sw.brightness || isNaN(sw.brightness)) return;
   if (sliderActiveSwitch.value) {
     updateBrightness(event);
-  } else if (!sliderLocation.value) {
+  } else if (!sliderLocation.value || !originalClientLocation.value) {
+    originalClientLocation.value = { x: event.clientX, y: event.clientY };
     sliderLocation.value = { x: event.clientX, y: event.clientY - sliderHeight * (.5 - sw.brightness / 100) };
     const carouselRect = carousel.value?.$el.getBoundingClientRect();
     sliderLocation.value.y = Math.min(Math.max(sliderLocation.value.y, carouselRect.top + (sliderHeight / 2 + 15)), carouselRect.bottom - (sliderHeight / 2 + 15));
     sliderLocation.value.x = Math.min(Math.max(sliderLocation.value.x, carouselRect.left + (sliderWidth / 2 + 15)), carouselRect.right - (sliderWidth / 2 + 15));
-  } else if (Math.abs(sliderLocation.value.y - event.clientY) > 15 && Math.abs(sliderLocation.value.x - event.clientX) < 20) {
+  } else if (Math.abs(originalClientLocation.value.y - event.clientY) > 10 && Math.abs(originalClientLocation.value.x - event.clientX) < 20) {
     sliderBrightness.value = sw.brightness ?? 0;
     sliderActiveSwitch.value = sw;
     sliderSendingBrightness.value = false;
@@ -299,25 +302,25 @@ function handlePointerMove(event: PointerEvent, sw: Switch | undefined): void {
 <style lang="scss">
 .carousel {
   height: 100% !important;
+  touch-action: none;
 
   svg {
-    touch-action: manipulation;
     height: 100%;
     width: 100% !important;
   }
 
   svg > path {
-    touch-action: manipulation !important;
+    touch-action: auto !important;
   }
 }
 
 .slider {
-  touch-action: manipulation !important;
+  touch-action: auto !important;
   position: absolute;
   top: 0;
   left: 0;
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
   z-index: 1000;
 }
 
