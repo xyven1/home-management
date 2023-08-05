@@ -12,11 +12,9 @@ import { createApp } from "vue";
 
 // Plugins
 import { registerPlugins } from "@/plugins";
-import { usePersistStore } from "./store/persist";
 
 const app = createApp(App);
 
 registerPlugins(app);
 
 app.mount("#app");
-usePersistStore();

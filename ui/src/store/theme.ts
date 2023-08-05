@@ -2,13 +2,13 @@ import { defineStore } from "pinia";
 import { Ref, ref, watch } from "vue";
 import { useTheme } from "vuetify/lib/framework.mjs";
 
-interface PersistStore {
+interface ThemeStore {
   darkMode: Ref<boolean>;
 }
 
-export const usePersistStore = defineStore(
-  "app",
-  (): PersistStore => {
+export const useThemeStore = defineStore(
+  "theme",
+  (): ThemeStore => {
     const theme = useTheme();
     const darkMode = ref(true);
     // watches are inplace of a computed property for darkMode, so persisting works
