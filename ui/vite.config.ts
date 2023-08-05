@@ -24,9 +24,9 @@ export default defineConfig({
       registerType: "autoUpdate",
       manifest: {
         name: "Home Management",
-        short_name: "MyApp",
+        short_name: "Home Management",
         description: "An app to manage your home",
-        theme_color: "#121212",
+        theme_color: "#1867C0",
         icons: [
           {
             src: "manifest-icon-192.maskable.png",
@@ -51,6 +51,26 @@ export default defineConfig({
             sizes: "512x512",
             type: "image/png",
             purpose: "maskable",
+          },
+        ],
+        shortcuts: [
+          {
+            name: "Lights",
+            short_name: "Lights",
+            description: "Control your lights",
+            url: "/lights",
+          },
+          {
+            name: "Irrigation",
+            short_name: "Irrigation",
+            description: "Control your irrigation",
+            url: "/irrigation",
+          },
+          {
+            name: "Entertainment",
+            short_name: "Entertainment",
+            description: "Control your Entertainment",
+            url: "/entertainment",
           },
         ],
       },
