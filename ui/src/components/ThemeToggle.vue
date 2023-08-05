@@ -7,8 +7,8 @@
   />
 </template>
 <script lang="ts" setup>
-import { useAppStore } from "@/store/app";
+import { usePersistStore } from "@/store/persist";
 import { storeToRefs } from "pinia";
 
-const { darkMode } = storeToRefs(useAppStore());
+const { darkMode } = storeToRefs(usePersistStore());
 </script>
