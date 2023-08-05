@@ -32,17 +32,12 @@
 import { useDisplay } from 'vuetify/lib/framework.mjs';
 const { platform, xs } = useDisplay();
 const safeAreaBottom = platform.value.ios ? 10 : 0;
-const safeAreaInsertTop = getComputedStyle(document.documentElement).getPropertyValue("--sat");
-const safeAreaInsertRight = getComputedStyle(document.documentElement).getPropertyValue("--sar");
-const safeAreaInsertBottom = getComputedStyle(document.documentElement).getPropertyValue("--sab");
-const safeAreaInsertLeft = getComputedStyle(document.documentElement).getPropertyValue("--sal");
-console.log(safeAreaInsertTop, safeAreaInsertRight, safeAreaInsertBottom, safeAreaInsertLeft);
 </script>
-<style>
+<style lang="scss">
 .ios {
   .v-btn {
     padding-bottom: v-bind('safeAreaBottom+"px"');
-    min-width: 70px !important;
+    min-width: 60px !important;
   }
 }
 </style>
