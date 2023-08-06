@@ -4,8 +4,8 @@
       {{ svg?.[layer]?.name ?? "Loading" }}
     </VAppBarTitle>
     <VAppBarNavIcon>
-      <VBtn v-if="!editing.enabled" icon="mdi-layers-edit" @click="startEditing" />
-      <VBtn v-else icon="mdi-check-all" @click="doneEditing" />
+      <VBtn v-if="!editing.enabled" :icon="mdiLayersEdit" @click="startEditing" />
+      <VBtn v-else :icon="mdiCheckAll" @click="doneEditing" />
     </VAppBarNavIcon>
   </VAppBar>
   <VCarousel
@@ -120,6 +120,7 @@
 import { useAppStore } from "@/store/app";
 import { useLightsStore } from "@/store/lights";
 import { Region, SerialNumber, Svg, Switch } from "@home-management/lib/types/socket";
+import { mdiCheckAll, mdiLayersEdit } from "@mdi/js";
 import { storeToRefs } from "pinia";
 import { Ref, ref } from "vue";
 import { useDisplay } from 'vuetify';

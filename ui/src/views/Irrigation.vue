@@ -13,7 +13,7 @@
                     </div>
                     <VSpacer />
                     <VBtn
-                      icon="mdi-delete" color="error" class="ma-n3" variant="text"
+                      :icon="mdiDelete" color="error" class="ma-n3" variant="text"
                       @click="config.events.splice(i, 1)"
                     />
                   </VExpansionPanelTitle>
@@ -87,7 +87,7 @@
             </VCardText>
             <VCardActions>
               <v-spacer />
-              <VBtn icon="mdi-plus" color="primary" variant="flat" @click="createEvent" />
+              <VBtn :icon="mdiPlus" color="primary" variant="flat" @click="createEvent" />
             </VCardActions>
           </VCard>
         </VCol>
@@ -113,7 +113,7 @@
                     </div>
                     <VSpacer />
                     <VBtn
-                      icon="mdi-delete" color="error" class="ma-n3" variant="text"
+                      :icon="mdiDelete" color="error" class="ma-n3" variant="text"
                       @click="config.sequences.splice(i, 1)"
                     />
                   </VExpansionPanelTitle>
@@ -143,7 +143,7 @@
                       </VCol>
                       <VCol align-self="center" class="flex-grow-0 pa-0">
                         <VBtn
-                          icon="mdi-delete" color="error" class="ma-n1" variant="text"
+                          :icon="mdiDelete" color="error" class="ma-n1" variant="text"
                           @click="sequence.jobs.splice(jI, 1)"
                         />
                       </VCol>
@@ -163,7 +163,7 @@
                       </span>
                       <VSpacer />
                       <VBtn
-                        icon="mdi-plus" color="primary" variant="flat"
+                        :icon="mdiPlus" color="primary" variant="flat"
                         @click="sequence.jobs.push({ name: '', valveIDs: [], duration: 0 })"
                       />
                     </VRow>
@@ -173,7 +173,7 @@
             </VCardText>
             <VCardActions>
               <v-spacer />
-              <VBtn icon="mdi-plus" color="primary" variant="flat" @click="createSequence" />
+              <VBtn :icon="mdiPlus" color="primary" variant="flat" @click="createSequence" />
             </VCardActions>
           </VCard>
         </VCol>
@@ -195,7 +195,7 @@
                     </div>
                     <VSpacer />
                     <VBtn
-                      icon="mdi-delete" color="error" class="ma-n3" variant="text"
+                      :icon="mdiDelete" color="error" class="ma-n3" variant="text"
                       @click="config.valves.splice(i, 1)"
                     />
                   </VExpansionPanelTitle>
@@ -221,7 +221,7 @@
             </VCardText>
             <VCardActions>
               <v-spacer />
-              <VBtn icon="mdi-plus" color="primary" variant="flat" @click="createValve" />
+              <VBtn :icon="mdiPlus" color="primary" variant="flat" @click="createValve" />
             </VCardActions>
           </VCard>
         </VCol>
@@ -248,7 +248,7 @@
                     </template>
                     <VSpacer />
                     <VBtn
-                      icon="mdi-delete" color="error" class="ma-n3" variant="text"
+                      :icon="mdiDelete" color="error" class="ma-n3" variant="text"
                       @click="config.devices.splice(i, 1)"
                     />
                   </VExpansionPanelTitle>
@@ -270,7 +270,7 @@
             <VCardActions class="d-flex flex-wrap justify-center">
               <VChip
                 v-for="([id, device]) of [...stateDevices].filter(([_, d]) => !config.devices.find(d2 => d2.mac === d.mac))"
-                :key="id" append-icon="mdi-plus" color="primary" variant="flat" class="ma-1" @click="() => {
+                :key="id" :append-icon="mdiPlus" color="primary" variant="flat" class="ma-1" @click="() => {
                   createDevice(device.mac);
                   selectedDevice = config.devices.length - 1;
                 }"
@@ -297,6 +297,7 @@
 <script setup lang="ts">
 import { useAppStore } from "@/store/app";
 import * as Irrigation from "@home-management/lib/types/irrigationConfig.ts";
+import { mdiDelete, mdiPlus } from "@mdi/js";
 import { Ref, computed, ref } from "vue";
 import { VCard } from "vuetify/lib/components/index.mjs";
 import { SubmitEventPromise, useDisplay } from "vuetify/lib/framework.mjs";

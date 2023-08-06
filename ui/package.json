@@ -24,6 +24,7 @@
   },
   "devDependencies": {
     "@babel/types": "^7.21.4",
+    "@mdi/js": "^7.2.96",
     "@types/node": "^18.15.0",
     "@types/webfontloader": "^1.6.35",
     "@vitejs/plugin-vue": "^4.0.0",
