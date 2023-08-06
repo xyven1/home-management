@@ -3,7 +3,7 @@ IrrigationState state;
 SemaphoreHandle_t stateMutex;
 
 DynamicJsonDocument IrrigationState::toJson() {
-  DynamicJsonDocument doc(1024);
+  DynamicJsonDocument doc(10000);
   JsonObject devices = doc.createNestedObject("devices");
   JsonObject valves = doc.createNestedObject("valves");
   JsonObject sequences = doc.createNestedObject("sequences");
@@ -29,13 +29,11 @@ DynamicJsonDocument IrrigationState::toJson() {
   return doc;
 }
 
-bool canConvertFromJson(JsonVariantConst src, const IPAddress &) { 
+bool canConvertFromJson(JsonVariantConst src, const IPAddress &) {
   IPAddress ip;
   return ip.fromString(src.as<const char *>());
 }
-void convertFromJson(JsonVariantConst src, IPAddress& dst) {
-  dst.fromString(src.as<const char*>());
-}
+void convertFromJson(JsonVariantConst src, IPAddress &dst) { dst.fromString(src.as<const char *>()); }
 
 std::optional<String> IrrigationState::fromJson(JsonVariant &json) {
   JsonObject devices = json["devices"].as<JsonObject>();

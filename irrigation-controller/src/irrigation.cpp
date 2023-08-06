@@ -1,8 +1,8 @@
 #include "irrigation.h"
 #include "config.h"
+#include "esp_time_helpers.h"
 #include "logging.h"
 #include "state.h"
-#include "esp_time_helpers.h"
 
 #include <cstring>
 #include <map>
@@ -31,13 +31,13 @@ void vTaskIrrigationControl(void *pvParameters) {
       continue;
     // keep track of the relays state
     valve_state_t valve_state[8];
-    //keep track of which sequences are in manual mode
+    // keep track of which sequences are in manual mode
     std::set<sequence_id_t> sequences_manual;
     // std::map<valve_id_t, valve_state_t> valve_state;
     xSemaphoreTake(configMutex, portMAX_DELAY);
     xSemaphoreTake(stateMutex, portMAX_DELAY);
     for (auto &[id, sequenceExecution] : state.Sequences) {
-      if(std::strcmp(sequenceExecution.startType, "manual"))
+      if (std::strcmp(sequenceExecution.startType, "manual"))
         continue;
       auto sequence = config.getSequence(id);
       if (sequence == nullptr || sequence->jobs.size() == 0)
@@ -52,7 +52,8 @@ void vTaskIrrigationControl(void *pvParameters) {
         continue;
       for (auto &valveID : job.valveIDs) {
         auto valve = config.getValve(valveID);
-        if (valve == nullptr || std::memcmp(config.getDevice(valve->deviceID)->mac, mac, 18) || valve->relay < 1 || valve->relay > 8)
+        if (valve == nullptr || std::memcmp(config.getDevice(valve->deviceID)->mac, mac, 18) || valve->relay < 1 ||
+            valve->relay > 8)
           continue;
         valve_state[valve->relay - 1].state = true;
         valve_state[valve->relay - 1].priority = std::numeric_limits<event_priority_t>::max();
@@ -60,7 +61,7 @@ void vTaskIrrigationControl(void *pvParameters) {
     }
     for (auto &[id, event] : config.Events) {
       // we shouldn't let sequences overlap
-      if(sequences_manual.find(event.sequenceID) != sequences_manual.end())
+      if (sequences_manual.find(event.sequenceID) != sequences_manual.end())
         continue;
       auto job_opt = event.getCurrentJob(now);
       if (!job_opt.has_value())
@@ -70,7 +71,8 @@ void vTaskIrrigationControl(void *pvParameters) {
         continue;
       for (auto &valveID : job.valveIDs) {
         auto valve = config.getValve(valveID);
-        if (valve == nullptr || std::memcmp(config.getDevice(valve->deviceID)->mac, mac, 18) || valve->relay < 1 || valve->relay > 8)
+        if (valve == nullptr || std::memcmp(config.getDevice(valve->deviceID)->mac, mac, 18) || valve->relay < 1 ||
+            valve->relay > 8)
           continue;
         if (valve_state[valve->relay - 1].priority < event.priority) {
           valve_state[valve->relay - 1].priority = event.priority;
@@ -79,10 +81,11 @@ void vTaskIrrigationControl(void *pvParameters) {
       }
     }
     for (auto &[id, valveExecution] : state.Valves) {
-      if(now - valveExecution.startTimestamp > valveExecution.duration && valveExecution.duration != -1)
+      if (now - valveExecution.startTimestamp > valveExecution.duration && valveExecution.duration != -1)
         continue;
       auto valve = config.getValve(id);
-      if (valve == nullptr || std::memcmp(config.getDevice(valve->deviceID)->mac, mac, 18) || valve->relay < 1 || valve->relay > 8)
+      if (valve == nullptr || std::memcmp(config.getDevice(valve->deviceID)->mac, mac, 18) || valve->relay < 1 ||
+          valve->relay > 8)
         continue;
       valve_state[valve->relay - 1].state = true;
     }

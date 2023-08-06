@@ -1,5 +1,5 @@
-#include "config.h"
 #include "server.h"
+#include "config.h"
 #include "irrigation.h"
 #include "logging.h"
 #include "state.h"
@@ -26,17 +26,15 @@ StaticJsonDocument<1000> makeDoc() {
   return doc;
 }
 
-void start_server(){
+void start_server() {
   server.onNotFound([](AsyncWebServerRequest *request) { request->send(404); });
-  //server index html
+  // server index html
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) { request->send(200, "text/html", html_page); });
   server.on("/restart", HTTP_GET, [](AsyncWebServerRequest *request) {
     request->send(200, "text/plain", "Restarting");
     ESP.restart();
   });
-  server.on("/mac", HTTP_GET, [](AsyncWebServerRequest *request) {
-    request->send(200, "text/plain", mac);
-  });
+  server.on("/mac", HTTP_GET, [](AsyncWebServerRequest *request) { request->send(200, "text/plain", mac); });
   server.on("/state", HTTP_GET, [](AsyncWebServerRequest *request) {
     AsyncResponseStream *response = request->beginResponseStream("application/json");
     serializeJson(makeDoc(), *response);
@@ -47,14 +45,17 @@ void start_server(){
     serializeJson(config.toJson(), *response);
     request->send(response);
   });
-  auto configHandler = new AsyncCallbackJsonWebHandler("/api/config", [](AsyncWebServerRequest *request, JsonVariant &json) {
-    logger_printf("Got config update from %s\n", request->client()->remoteIP().toString().c_str());
-    auto res = config.fromJson(json);
-    if (!res.has_value())
-      request->send(200, "text/plain", "success");
-    else
-      request->send(400, "text/plain", res.value().c_str());
-  });
+  auto configHandler = new AsyncCallbackJsonWebHandler(
+      "/api/config",
+      [](AsyncWebServerRequest *request, JsonVariant &json) {
+        logger_printf("Got config update from %s\n", request->client()->remoteIP().toString().c_str());
+        auto res = config.fromJson(json);
+        if (!res.has_value())
+          request->send(200, "text/plain", "success");
+        else
+          request->send(400, "text/plain", res.value().c_str());
+      },
+      10000);
   configHandler->setMethod(HTTP_POST);
   server.addHandler(configHandler);
   server.on("/api/state", HTTP_GET, [](AsyncWebServerRequest *request) {
@@ -62,25 +63,28 @@ void start_server(){
     serializeJson(state.toJson(), *response);
     request->send(response);
   });
-  auto stateHandler = new AsyncCallbackJsonWebHandler("/api/state", [](AsyncWebServerRequest *request, JsonVariant &json) {
-    logger_printf("Got state update from %s\n", request->client()->remoteIP().toString().c_str());
-    auto res = state.fromJson(json);
-    if (!res.has_value())
-      request->send(200, "text/plain", "success");
-    else
-      request->send(400, "text/plain", res.value().c_str());
-  });
+  auto stateHandler = new AsyncCallbackJsonWebHandler(
+      "/api/state",
+      [](AsyncWebServerRequest *request, JsonVariant &json) {
+        logger_printf("Got state update from %s\n", request->client()->remoteIP().toString().c_str());
+        auto res = state.fromJson(json);
+        if (!res.has_value())
+          request->send(200, "text/plain", "success");
+        else
+          request->send(400, "text/plain", res.value().c_str());
+      },
+      10000);
   stateHandler->setMethod(HTTP_POST);
   server.addHandler(stateHandler);
   server.on("^\\/api\\/relay\\/([0-9]+)\\/(on|off)$", HTTP_GET, [](AsyncWebServerRequest *request) {
     int relayNum = request->pathArg(0).toInt();
     bool relayAction = request->pathArg(1).equals("on");
     // set the relay
-    if(relayNum < 1 || relayNum > 8){
+    if (relayNum < 1 || relayNum > 8) {
       request->send(400, "text/plain", "Bad Request. Relay number must be between 1 and 8");
       return;
     }
-    if(relayAction)
+    if (relayAction)
       relay.turn_on_channel(relayNum);
     else
       relay.turn_off_channel(relayNum);
@@ -95,11 +99,11 @@ void start_server(){
       request->send(400, "text/plain", "No such valve");
       return;
     }
-    if(config.getDevice(valve->deviceID)->mac != mac) {
+    if (config.getDevice(valve->deviceID)->mac != mac) {
       request->send(200, "text/plain");
       return;
     }
-    if(valveAction)
+    if (valveAction)
       relay.turn_on_channel(valve->relay);
     else
       relay.turn_off_channel(valve->relay);

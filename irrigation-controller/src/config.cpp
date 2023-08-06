@@ -62,7 +62,7 @@ std::optional<job_t> irrigation_event_t::getCurrentJob(time_t now) {
 }
 
 DynamicJsonDocument Config::toJson() {
-  DynamicJsonDocument doc(1000);
+  DynamicJsonDocument doc(10000);
   JsonArray devices = doc.createNestedArray("devices");
   JsonArray valves = doc.createNestedArray("valves");
   JsonArray sequences = doc.createNestedArray("sequences");

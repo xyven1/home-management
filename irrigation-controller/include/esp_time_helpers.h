@@ -3,8 +3,8 @@
 
 #include <Arduino.h>
 
-void set_timezone(String timezone);
-void initTime(String timezone);
+bool set_timezone(String timezone);
+bool initTime(String timezone);
 void print_local_time();
 time_t get_epoch_time();
 
