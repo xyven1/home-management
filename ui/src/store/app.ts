@@ -4,9 +4,11 @@ import {
 } from "@home-management/lib/types/socket";
 import { defineStore } from "pinia";
 import { Socket, io } from "socket.io-client";
+import { Ref, ref } from "vue";
 
 interface AppStore {
   socket: Socket<ServerToClientEvents, ClientToServerEvents>;
+  connected: Ref<boolean>;
 }
 
 const v4exact =
@@ -24,7 +26,15 @@ export const useAppStore = defineStore("app", (): AppStore => {
   const socket = io(
     import.meta.env.DEV ? `http://${ip}:${port}` : `https://${ip}`,
   );
+  const connected = ref(socket.connected);
+  socket.on("disconnect", () => {
+    connected.value = false;
+  });
+  socket.on("connect", () => {
+    connected.value = true;
+  });
   return {
     socket,
+    connected,
   };
 });
