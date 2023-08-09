@@ -21,7 +21,7 @@ export default defineConfig({
       },
     }),
     VitePWA({
-      registerType: "autoUpdate",
+      registerType: "prompt",
       manifest: {
         name: "Home Management",
         short_name: "Home Management",
