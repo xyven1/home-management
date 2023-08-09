@@ -76,6 +76,8 @@ export default defineConfig({
       },
       strategies: "generateSW",
       workbox: {
+        globIgnores: ["**/index.html"],
+        navigateFallback: null,
         cleanupOutdatedCaches: true,
         runtimeCaching: [
           {

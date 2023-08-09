@@ -9,6 +9,7 @@ import { Ref, ref } from "vue";
 interface AppStore {
   socket: Socket<ServerToClientEvents, ClientToServerEvents>;
   connected: Ref<boolean>;
+  debug: Ref<any[]>;
 }
 
 const v4exact =
@@ -17,6 +18,17 @@ const domainexact =
   /^(?:(?!-)[A-Za-z\d-]{1,63}(?<!-)\.)+(?![\d-])[A-Za-z\d-]{2,63}(?<!-)\.?$/;
 
 export const useAppStore = defineStore("app", (): AppStore => {
+  const debug = ref<any[]>([]);
+  let oldLog: (...data: any[]) => void;
+  if (typeof console != "undefined")
+    if (typeof console.log != "undefined") oldLog = console.log;
+    else oldLog = function () {};
+
+  console.log = function (message) {
+    oldLog(message);
+    debug.value.push(message);
+  };
+  console.error = console.debug = console.info = console.log;
   const ip = import.meta.env.VITE_SERVER_IP;
   if (ip === undefined || (!v4exact.test(ip) && !domainexact.test(ip)))
     throw new Error("IP is undefined or invalid");
@@ -36,5 +48,6 @@ export const useAppStore = defineStore("app", (): AppStore => {
   return {
     socket,
     connected,
+    debug,
   };
 });
