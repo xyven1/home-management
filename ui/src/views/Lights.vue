@@ -31,7 +31,7 @@
             <stop :offset="region.sw!.brightness! + '%'" stop-color="rgb(var(--v-theme-tertiary))" />
             <stop
               :offset="region.sw!.brightness! + '%'"
-              stop-color="color-mix(in oklab, rgb(var(--v-theme-surface-variant)), rgb(var(--v-theme-tertiary)) 25%)"
+              stop-color="color-mix(in oklab, rgb(var(--v-theme-lightOff)), rgb(var(--v-theme-lightOn)) 25%)"
             />
           </linearGradient>
         </defs>
@@ -41,12 +41,13 @@
             fill: editing.enabled
               ? region.sn
                 ? 'rgb(var(--v-theme-success))'
-                : 'rgb(var(--v-theme-surface-variant))'
+                : 'rgb(var(--v-theme-lightOff))'
               : {
-                0: 'rgb(var(--v-theme-surface-variant))',
-                1: region.sw?.brightness && !isNaN(region.sw.brightness) ? `url(#${'gradient' + region.title.replace(' ', '')})` : 'rgb(var(--v-theme-tertiary))',
+                [-1]: 'rgb(var(--v-theme-lightNone))',
+                0: 'rgb(var(--v-theme-lightOff))',
+                1: region.sw?.brightness && !isNaN(region.sw.brightness) ? `url(#${'gradient' + region.title.replace(' ', '')})` : 'rgb(var(--v-theme-lightOn))',
                 2: 'rgb(var(--v-theme-info))',
-              }[region.sw?.state ?? 0] || 'rgb(var(--v-theme-error))'
+              }[region.sw?.state ?? -1] || 'rgb(var(--v-theme-error))'
             , 'stroke-width': region.stroke ?? 0,
           }" @click="editing.enabled ? startEditingRegion(region) : toggle(region.sn, region.sw)"
           @pointermove.passive.capture="!editing.enabled && handlePointerMove($event, region.sw)"
@@ -123,12 +124,19 @@ import { Region, SerialNumber, Svg, Switch } from "@home-management/lib/types/so
 import { mdiCheckAll, mdiLayersEdit } from "@mdi/js";
 import { storeToRefs } from "pinia";
 import { Ref, ref } from "vue";
-import { useDisplay } from 'vuetify';
+import { useDisplay, useTheme } from 'vuetify';
 import { VCarousel, VOverlay } from "vuetify/lib/components/index.mjs";
 
 const { layer } = storeToRefs(useLightsStore());
 const { socket } = useAppStore();
 const { smAndUp } = useDisplay();
+const { themes } = useTheme();
+themes.value.dark.colors.lightOn = themes.value.dark.colors.tertiary;
+themes.value.dark.colors.lightNone = "#333";
+themes.value.dark.colors.lightOff = "ccc";
+themes.value.light.colors.lightOn = themes.value.dark.colors.tertiary;
+themes.value.light.colors.lightNone = "#ddd";
+themes.value.light.colors.lightOff = "#888";
 
 const carousel = ref<VCarousel | undefined>();
 const svg = ref<Svg | null>(null);
