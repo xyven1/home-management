@@ -1,10 +1,5 @@
 <template>
-  <v-switch
-    v-model="darkMode"
-    :true-icon="mdiWeatherSunny"
-    :false-icon="mdiWeatherNight"
-    inset
-  />
+  <VSwitch v-model="darkMode" :true-icon="mdiWeatherSunny" :false-icon="mdiWeatherNight" inset hide-details="auto" />
 </template>
 <script lang="ts" setup>
 import { useThemeStore } from "@/store/theme";

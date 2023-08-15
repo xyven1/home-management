@@ -36,6 +36,13 @@ const routes: RouteRecordRaw[] = [
       },
     ],
   },
+  {
+    path: "/redirect/:host",
+    component: () => {},
+    beforeEnter: (to) => {
+      window.location.href = "https://" + to.params.host + ".viselaya.org";
+    },
+  },
 ];
 
 const router = createRouter({
