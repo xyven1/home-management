@@ -19,12 +19,12 @@ export default (io: AppServer): void => {
   const svgPath = upath.join(configPath, "svg.json");
 
   // init devices file
-  if (!fs.existsSync(dataPath)) {
+  if (!fs.existsSync(devicesPath)) {
     fs.mkdirSync(upath.join(dataPath), { recursive: true });
     fs.writeFileSync(devicesPath, JSON.stringify([]));
   }
   // init svg file
-  if (!fs.existsSync(configPath)) {
+  if (!fs.existsSync(svgPath)) {
     fs.mkdirSync(upath.join(configPath), { recursive: true });
     fs.writeFileSync(svgPath, JSON.stringify([]));
   }
