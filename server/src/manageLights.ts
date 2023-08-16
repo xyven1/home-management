@@ -36,7 +36,7 @@ export default (io: AppServer): void => {
     discover_opts: {
       explicitSocketBind: true,
     },
-    // listen_interface: 'eno1'
+    listen_interface: 'vlan20@eno1'
   });
 
   // sync devices loaded onto server with devices stored on file
