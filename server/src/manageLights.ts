@@ -36,14 +36,13 @@ export default (io: AppServer): void => {
     discover_opts: {
       explicitSocketBind: true,
     },
-    listen_interface: 'vlan20@eno1'
   });
 
   // sync devices loaded onto server with devices stored on file
   const sync = debounce(() => {
     fs.readFile(devicesPath, (err, data) => {
       const parsed: Device[] = JSON.parse(data.toString());
-      for (const [, client] of Object.entries(devices)) {
+      for (const [, client] of devices) {
         let sw = parsed.find(
           (sw) => sw.serialNumber === client.device.serialNumber
         );
@@ -117,6 +116,7 @@ export default (io: AppServer): void => {
   loadDevices().catch(console.error);
 
   // repeated discover run every 10 seconds
+  discover();
   setInterval(discover, 10000);
 
   io.on("connection", (socket) => {
