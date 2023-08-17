@@ -9,9 +9,9 @@ DynamicJsonDocument IrrigationState::toJson() {
   JsonObject sequences = doc.createNestedObject("sequences");
   xSemaphoreTake(stateMutex, portMAX_DELAY);
   for (const auto &[id, device] : Devices) {
-    JsonObject d = devices.createNestedObject(String(device.mac));
+    JsonObject d = devices.createNestedObject(String(device.mac.data()));
     d["ip"] = device.ip.toString();
-    d["mac"] = device.mac;
+    d["mac"] = device.mac.data();
   }
   for (const auto &[id, valve] : Valves) {
     JsonObject v = valves.createNestedObject(String(id));
@@ -25,6 +25,7 @@ DynamicJsonDocument IrrigationState::toJson() {
     s["startTimestamp"] = sequence.startTimestamp;
     s["startType"] = sequence.startType;
   }
+  doc["disabled"] = Disabled;
   xSemaphoreGive(stateMutex);
   return doc;
 }
@@ -58,8 +59,8 @@ std::optional<String> IrrigationState::fromJson(JsonVariant &json) {
     auto m = device["mac"].as<const char *>();
     if (m == NULL || strlen(m) != 17)
       return "Bad mac";
-    strcpy(d.mac, m);
-    newState.Devices.emplace(String(d.mac), d);
+    std::copy_n(m, 18, std::begin(d.mac));
+    newState.Devices.emplace(d.mac, d);
   }
   for (auto kv : valves) {
     JsonObject valve = kv.value().as<JsonObject>();
@@ -99,6 +100,7 @@ std::optional<String> IrrigationState::fromJson(JsonVariant &json) {
     strcpy(s.startType, startType);
     newState.Sequences.emplace(s.sequenceID, s);
   }
+  newState.Disabled = json["disabled"].as<bool>();
   xSemaphoreTake(stateMutex, portMAX_DELAY);
   *this = newState;
   xSemaphoreGive(stateMutex);

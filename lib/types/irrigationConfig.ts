@@ -129,4 +129,5 @@ export type State = {
   sequences: {
     [id: SequenceID]: SequenceExecution;
   };
+  disabled: boolean;
 };

@@ -28,6 +28,7 @@ const sequences = new Map<
   Irrigation.SequenceID,
   Irrigation.SequenceExecution
 >();
+let disabled = false;
 function getState(noScheduled: boolean = false): Irrigation.State {
   return {
     devices: Object.fromEntries(devices),
@@ -37,6 +38,7 @@ function getState(noScheduled: boolean = false): Irrigation.State {
         ([_, seq]) => !noScheduled || seq.startType === "manual"
       )
     ),
+    disabled,
   };
 }
 
@@ -347,5 +349,15 @@ export default (io: AppServer): void => {
         else wsCallback({ ok: true, value: newSequenceExecution ?? null });
       }
     );
+    socket.on("setIrrigationDisabled", async (newDisabled, wsCallback) => {
+      disabled = newDisabled;
+      const ok = await handleManualStatusUpdate(socket);
+      if (!ok)
+        wsCallback({
+          ok: false,
+          err: "Failed to send state to all devices",
+        });
+      else wsCallback({ ok: true });
+    });
   });
 };

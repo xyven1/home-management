@@ -1,6 +1,12 @@
 <template>
   <VForm :disabled="saving" class="fill-height" @submit.prevent="saveConfig">
     <VContainer fluid class="pa-1">
+      <VRow dense class="justify-center">
+        <VSwitch
+          :model-value="disabled" label="Global Kill Switch" hide-details="auto" inset class="flex-grow-0" color="warning"
+          @update:model-value="(v: any) => setDisabled(v as boolean)"
+        />
+      </VRow> 
       <VRow dense>
         <VCol :cols="cols">
           <VCard title="Events" variant="tonal">
@@ -328,10 +334,12 @@ socket.emitWithAck("getIrrigationConfig").then(updateConfig);
 const stateSequences = ref<Map<Irrigation.SequenceID, Irrigation.SequenceExecution>>(new Map());
 const stateValves = ref<Map<Irrigation.ValveID, Irrigation.ValveExecution>>(new Map());
 const stateDevices = ref<Map<string, Irrigation.DeviceConnection>>(new Map());
+const disabled = ref<boolean>(false);
 const updateState = (state: Irrigation.State) => {
   stateSequences.value = new Map(Object.entries(state.sequences).map(([k, v]) => [Irrigation.SequenceID(k), v]));
   stateValves.value = new Map(Object.entries(state.valves).map(([k, v]) => [Irrigation.ValveID(k), v]));
   stateDevices.value = new Map(Object.entries(state.devices));
+  disabled.value = state.disabled;
 };
 socket.on("irrigationStateChange", updateState);
 socket.emitWithAck("getIrrigationState").then(updateState)
@@ -357,7 +365,11 @@ async function stopValve(id: Irrigation.ValveID) {
   if (res.ok)
     stateValves.value.delete(id);
 }
-
+async function setDisabled(val: boolean) {
+  const res = await socket.emitWithAck("setIrrigationDisabled", val);
+  if (res.ok)
+    disabled.value = val;
+}
 // Config editing
 const saving = ref(false);
 const errorSaving = ref(false);

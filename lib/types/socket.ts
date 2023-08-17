@@ -100,6 +100,10 @@ export type ClientToServerEvents = {
     state: boolean,
     wsCallback: (res: WsResponse<Irrigation.SequenceExecution | null>) => void
   ) => void;
+  setIrrigationDisabled: (
+    disabled: boolean,
+    wsCallback: (res: WsResponse) => void
+  ) => void;
   getIrrigationState: (wsCallback: (state: Irrigation.State) => void) => void;
   getIrrigationConfig: (
     wsCallback: (config: Irrigation.Config) => void

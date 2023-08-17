@@ -7,7 +7,7 @@
 #include <map>
 
 struct device_connection_t {
-  char mac[18];
+  std::array<char, 18> mac;
   IPAddress ip;
 };
 
@@ -28,7 +28,8 @@ class IrrigationState {
 public:
   std::map<valve_id_t, valve_execution_t> Valves;
   std::map<sequence_id_t, sequence_execution_t> Sequences;
-  std::map<String, device_connection_t> Devices;
+  std::map<std::array<char, 18>, device_connection_t> Devices;
+  bool Disabled;
 
   DynamicJsonDocument toJson();
   std::optional<String> fromJson(JsonVariant &json);

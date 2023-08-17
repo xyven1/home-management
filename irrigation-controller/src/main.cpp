@@ -23,7 +23,8 @@ static portMUX_TYPE spinlock = portMUX_INITIALIZER_UNLOCKED;
 // globals for ethernet connection
 static bool eth_connected = false;
 static bool wifi_connected = false;
-char mac[18];
+std::array<char, 18> mac;
+String hostname;
 
 // Tasks
 TaskHandle_t irrigationControlTask;
@@ -32,12 +33,13 @@ void setup() {
   // set mac address
   uint8_t mac_raw[6];
   esp_read_mac(mac_raw, ESP_MAC_WIFI_STA);
-  sprintf(mac, "%02X:%02X:%02X:%02X:%02X:%02X", mac_raw[0], mac_raw[1], mac_raw[2], mac_raw[3], mac_raw[4], mac_raw[5]);
+  snprintf(mac.data(), mac.size(), "%02X:%02X:%02X:%02X:%02X:%02X", mac_raw[0], mac_raw[1], mac_raw[2], mac_raw[3],
+           mac_raw[4], mac_raw[5]);
   configMutex = xSemaphoreCreateMutex();
   stateMutex = xSemaphoreCreateMutex();
   char last3hex[7];
   sprintf(last3hex, "%02X%02X%02X", mac_raw[3], mac_raw[4], mac_raw[5]);
-  String hostname = HOSTNAME + String(last3hex);
+  hostname = HOSTNAME + String(last3hex);
 
   init_logging();
   logger_printf("%s starting setup.\n", hostname.c_str());
@@ -45,12 +47,16 @@ void setup() {
   WiFi.setHostname(hostname.c_str());
   WiFi.onEvent(ArduinoEvent);
   ETH.begin();
-  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
   // wait for connection
-  while (!eth_connected && !wifi_connected) {
+  for (int i = 0; i < 50 && !eth_connected; i++)
     delay(100);
+  if (!eth_connected) {
+    logger_printf("Ethernet connection failed. Attempting wifi connection\n");
+    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   }
+  while (!eth_connected && !wifi_connected)
+    delay(100);
 
   init_relay();
 
@@ -74,7 +80,7 @@ void ArduinoEvent(arduino_event_id_t event) {
   // for ethernet
   case ARDUINO_EVENT_ETH_START:
     logger_printf("ETH Started\n");
-    ETH.setHostname(HOSTNAME);
+    ETH.setHostname(hostname.c_str());
     break;
   case ARDUINO_EVENT_ETH_CONNECTED:
     logger_printf("ETH Connected\n");

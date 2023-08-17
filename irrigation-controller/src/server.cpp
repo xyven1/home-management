@@ -1,6 +1,7 @@
 #include "server.h"
 #include "config.h"
 #include "irrigation.h"
+#include "esp_time_helpers.h"
 #include "logging.h"
 #include "state.h"
 
@@ -34,7 +35,24 @@ void start_server() {
     request->send(200, "text/plain", "Restarting");
     ESP.restart();
   });
-  server.on("/mac", HTTP_GET, [](AsyncWebServerRequest *request) { request->send(200, "text/plain", mac); });
+  server.on("/mac", HTTP_GET, [](AsyncWebServerRequest *request) { request->send(200, "text/plain", mac.data()); });
+  server.on("/mac2", HTTP_GET, [](AsyncWebServerRequest *request) { 
+    String macBytes = "";
+    auto valveExecution = state.Valves.begin()->second;
+    auto valve = config.getValve(state.Valves.begin()->first);
+    auto mac2 = config.getDevice(valve->deviceID)->mac;
+    macBytes += "Mac Equal: ";
+    macBytes += String(mac2 == mac);
+    macBytes += "\n";
+    macBytes += "Time ok: ";
+    time_t now = get_epoch_time();
+    macBytes += String(now - valveExecution.startTimestamp <= valveExecution.duration || valveExecution.duration == -1);
+    macBytes += "\n";
+    macBytes += "Relay OK: ";
+    macBytes += String(valve != nullptr);
+
+    request->send(200, "text/plain", macBytes);
+  });
   server.on("/state", HTTP_GET, [](AsyncWebServerRequest *request) {
     AsyncResponseStream *response = request->beginResponseStream("application/json");
     serializeJson(makeDoc(), *response);

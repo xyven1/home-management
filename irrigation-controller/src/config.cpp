@@ -72,7 +72,7 @@ DynamicJsonDocument Config::toJson() {
     JsonObject deviceObj = devices.createNestedObject();
     deviceObj["id"] = device.id;
     deviceObj["name"] = device.name;
-    deviceObj["mac"] = device.mac;
+    deviceObj["mac"] = device.mac.data();
   }
   for (auto &[id, valve] : Valves) {
     JsonObject valveObj = valves.createNestedObject();
@@ -135,7 +135,7 @@ std::optional<String> Config::fromJson(JsonVariant &json) {
     auto m = device["mac"].as<const char *>();
     if (m == NULL || strlen(m) != 17)
       return "Bad mac";
-    strcpy(d.mac, m);
+    std::copy_n(m, 18, std::begin(d.mac));
     d.name = device["name"].as<String>();
     newConfig.Devices.emplace(d.id, d);
   }
@@ -184,11 +184,6 @@ std::optional<String> Config::fromJson(JsonVariant &json) {
   newConfig.Timezone = json["timezone"].as<String>();
   // at this point we have a valid config. Assign it to this
   xSemaphoreTake(configMutex, portMAX_DELAY);
-  // this->Devices = newConfig.Devices;
-  // this->Valves = newConfig.Valves;
-  // this->Sequences = newConfig.Sequences;
-  // this->Events = newConfig.Events;
-  // this->Timezone = newConfig.Timezone;
   *this = newConfig;
   xSemaphoreGive(configMutex);
   return {};

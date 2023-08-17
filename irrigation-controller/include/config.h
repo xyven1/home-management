@@ -9,7 +9,7 @@ typedef uint device_id_t;
 typedef struct {
   device_id_t id;
   String name;
-  char mac[18];
+  std::array<char, 18> mac;
 } device_t;
 
 typedef uint valve_id_t;
@@ -68,6 +68,6 @@ public:
 
 extern Config config;
 extern SemaphoreHandle_t configMutex;
-extern char mac[18];
+extern std::array<char, 18> mac;
 
 #endif
