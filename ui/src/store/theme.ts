@@ -2,9 +2,9 @@ import { defineStore } from "pinia";
 import { Ref, ref, watch } from "vue";
 import { useTheme } from "vuetify/lib/framework.mjs";
 
-interface ThemeStore {
+type ThemeStore = {
   darkMode: Ref<boolean>;
-}
+};
 
 export const useThemeStore = defineStore(
   "theme",

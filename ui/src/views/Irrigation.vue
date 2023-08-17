@@ -153,8 +153,8 @@
                         {{ (() => {
                           let state = stateSequences.get(sequence.id);
                           if (state === undefined) return 'Stopped';
-                          if(state.startType === 'manual')
-                            return 'Manually Started: ' + new Date(state.startTimestamp *1000).toLocaleString();
+                          if (state.startType === 'manual')
+                            return 'Manually Started: ' + Irrigation.TimeTNow(state.startTimestamp).toLocaleString();
                           else if (state.startType === 'scheduled') {
                             const eventID = state.eventID
                             return 'Scheduled: ' + config.events.find(e => e.id === eventID)?.name;

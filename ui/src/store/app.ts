@@ -6,11 +6,11 @@ import { defineStore } from "pinia";
 import { Socket, io } from "socket.io-client";
 import { Ref, ref } from "vue";
 
-interface AppStore {
+type AppStore = {
   socket: Socket<ServerToClientEvents, ClientToServerEvents>;
   connected: Ref<boolean>;
   debug: Ref<any[]>;
-}
+};
 
 const v4exact =
   /^(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)){3}$/;

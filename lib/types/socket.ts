@@ -3,39 +3,40 @@ import { type Branded } from "./brand.js";
 
 export type SerialNumber = Branded<string, "SerialNumber">;
 
-export interface Device {
+export type Device = {
   name: string;
   serialNumber: SerialNumber;
   ip: string;
   port: number;
-}
+};
 
-export interface Switch {
+export type Switch = {
   name: string;
   serialNumber: SerialNumber;
   state: number;
   brightness?: number;
-}
+};
 
-export interface Region {
+export type Region = {
   d: string;
   title: string;
   sn: SerialNumber;
   stroke?: number;
   sw?: Switch;
-}
-export interface SvgLayer {
+};
+
+export type SvgLayer = {
   name: string;
   regions: Region[];
   background?: { name: string };
-}
+};
 
 export type Svg = SvgLayer[];
 
-export interface DeviceState {
+export type DeviceState = {
   BinaryState: number;
   brightness?: number;
-}
+};
 
 export type WsResponse<T = void> =
   | (T extends void ? { ok: true } : { ok: true; value: T })
@@ -46,7 +47,7 @@ export enum TVPosition {
   Down,
 }
 
-export interface ClientToServerEvents {
+export type ClientToServerEvents = {
   // for audio
   getAudioInput: (wsCallback: (input: string) => void) => void;
   changeInput: (input: string, wsCallback: (res: string) => void) => void;
@@ -107,8 +108,8 @@ export interface ClientToServerEvents {
     config: Irrigation.Config,
     wsCallback: (res: WsResponse) => void
   ) => void;
-}
-export interface ServerToClientEvents {
+};
+export type ServerToClientEvents = {
   // for audio
   // for lights
   stateChange: (sn: SerialNumber, state: number) => void;
@@ -116,4 +117,4 @@ export interface ServerToClientEvents {
   // for irrigation
   irrigationConfigChange: (config: Irrigation.Config) => void;
   irrigationStateChange: (state: Irrigation.State) => void;
-}
+};

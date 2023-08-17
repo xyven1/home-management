@@ -14,36 +14,36 @@ function constrain(
 export type DeviceID = Branded<number, "DeviceID">;
 export const DeviceID = (id: number | string): DeviceID =>
   constrain(Number(id)) as DeviceID;
-export interface Device {
+export type Device = {
   id: DeviceID;
   name: string;
   mac: string;
-}
+};
 
 export type ValveID = Branded<number, "ValveID">;
 export const ValveID = (id: number | string): ValveID =>
   constrain(Number(id)) as ValveID;
-export interface Valve {
+export type Valve = {
   id: ValveID;
   deviceID: DeviceID;
   relay: number;
   name: string;
-}
+};
 
-export interface Job {
+export type Job = {
   name: string;
   duration: number;
   valveIDs: ValveID[];
-}
+};
 
 export type SequenceID = Branded<number, "SequenceID">;
 export const SequenceID = (id: number | string): SequenceID =>
   constrain(Number(id)) as SequenceID;
-export interface Sequence {
+export type Sequence = {
   id: SequenceID;
   name: string;
   jobs: Job[];
-}
+};
 
 export type EventID = Branded<number, "EventID">;
 export const EventID = (id: number): EventID => constrain(id) as EventID;
@@ -57,10 +57,11 @@ export type TimeT = Branded<number, "TimeT">;
  */
 export const TimeT = (time: number): TimeT =>
   constrain(time, Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER) as TimeT;
+export const TimeTNow = (time: TimeT): Date => new Date(time * 1000);
 export type Offset = Branded<number, "Offset">;
 export const Offset = (offset: number): Offset =>
   constrain(offset, 0, 60 * 60 * 24) as Offset;
-export interface Event {
+export type Event = {
   id: EventID;
   name: string;
   priority: EventPriority;
@@ -77,50 +78,48 @@ export interface Event {
   ];
   start: TimeT;
   end: TimeT;
-}
+};
 
-export interface Config {
+export type Config = {
   devices: Device[];
   valves: Valve[];
   sequences: Sequence[];
   events: Event[];
   timezone: string;
-}
+};
 
-export interface DeviceConnection {
+export type DeviceConnection = {
   mac: string;
   ip: string;
-}
+};
 
 export type SequenceExecutionType = "manual" | "scheduled";
-export interface SequenceExecutionBase<T extends SequenceExecutionType> {
+export type SequenceExecutionBase<T extends SequenceExecutionType> = {
   sequenceID: SequenceID;
   currentJob: number;
   /** How the execution was started */
   startType: T;
-}
-export interface SequenceExecutionManual
-  extends SequenceExecutionBase<"manual"> {
+};
+export type SequenceExecutionManual = SequenceExecutionBase<"manual"> & {
   startTimestamp: TimeT;
-}
-export interface SequenceExecutionScheduled
-  extends SequenceExecutionBase<"scheduled"> {
+};
+export type SequenceExecutionScheduled = SequenceExecutionBase<"scheduled"> & {
   /** The event that started the execution */
   eventID: EventID;
-}
+};
 export type SequenceExecution =
   | SequenceExecutionManual
   | SequenceExecutionScheduled;
 
-export interface ValveExecution {
+export type ValveExecution = {
   valveID: ValveID;
   /** Seconds since epoch */
   startTimestamp: number;
   /** Diruation in seconds. -1 signifies forever */
   duration: number;
-}
+};
 
-export interface State {
+export type State = {
   devices: {
     [mac: string]: DeviceConnection;
   };
@@ -130,4 +129,4 @@ export interface State {
   sequences: {
     [id: SequenceID]: SequenceExecution;
   };
-}
+};
