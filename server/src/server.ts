@@ -33,21 +33,13 @@ const io: AppServer = new Server(server, {
 // middleware
 app.use(cors());
 app.use(compression());
-app.use(express.static(process.env.DIST_PATH ?? defaultDistPath));
+app.use(express.static(process.env.DIST_PATH ?? defaultDistPath, {
+  setHeaders: res => {
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, private");
+  }
+}));
 
-app.get("sw.js", (req, res) => {
-  res.set("Cache-Control", "no-store, no-cache, must-revalidate, private");
-  res.sendFile(
-    path.join(
-      process.env.DIST_PATH !== undefined
-        ? path.join(path.resolve(), process.env.DIST_PATH)
-        : path.join(path.resolve(), defaultDistPath),
-      "sw.js"
-    )
-  );
-});
-app.get(/.*/, (req, res) => {
-  // prevent caching
+app.get(/.*/, (_req, res) => {
   res.set("Cache-Control", "no-store, no-cache, must-revalidate, private");
   res.sendFile(
     path.join(
