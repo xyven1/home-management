@@ -12,11 +12,6 @@ type AppStore = {
   debug: Ref<any[]>;
 };
 
-const v4exact =
-  /^(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)){3}$/;
-const domainexact =
-  /^(?:(?!-)[A-Za-z\d-]{1,63}(?<!-)\.)+(?![\d-])[A-Za-z\d-]{2,63}(?<!-)\.?$/;
-
 export const useAppStore = defineStore("app", (): AppStore => {
   const debug = ref<any[]>([]);
   let oldLog: (...data: any[]) => void;
@@ -29,9 +24,7 @@ export const useAppStore = defineStore("app", (): AppStore => {
     debug.value.push(message);
   };
   console.error = console.debug = console.info = console.log;
-  const ip = import.meta.env.VITE_SERVER_IP;
-  if (ip === undefined || (!v4exact.test(ip) && !domainexact.test(ip)))
-    throw new Error("IP is undefined or invalid");
+  const ip = location.hostname;
   const port = import.meta.env.VITE_SERVER_PORT;
   if (import.meta.env.DEV && (port === undefined || isNaN(Number(port))))
     throw new Error("Port is undefined or invalid");
