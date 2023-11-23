@@ -4,10 +4,8 @@
       <VCol>
         <VCard title="Tools">
           <VCardText align="center">
-            <VBtn
-              v-for="(tool, i) of externalTools" :key="i" variant="tonal"
-              :to="`/redirect/${tool.host}`" size="large" class="ma-2" color="secondary"
-            >
+            <VBtn v-for="(tool, i) of externalTools" :key="i" variant="tonal" :to="`/redirect/${tool.host}`" size="large"
+              class="ma-2" color="secondary">
               <template #prepend>
                 <VIcon size="x-large">
                   {{ tool.icon }}
@@ -44,7 +42,7 @@
 <script setup lang="ts">
 import ThemeToggle from "@/components/ThemeToggle.vue";
 import { useAppStore } from "@/store/app";
-import { mdiAlphaUCircle, mdiPlex, mdiRouterNetwork } from "@mdi/js";
+import { mdiAlphaUCircle, mdiMonitorDashboard, mdiPlex, mdiRouterNetwork } from "@mdi/js";
 import { storeToRefs } from "pinia";
 import { Ref, ref } from "vue";
 
@@ -69,6 +67,11 @@ const externalTools: Ref<ExternalTool[]> = ref([
     name: "Unifi",
     icon: mdiAlphaUCircle,
     host: "unifi.ockham",
+  },
+  {
+    name: "Monitor",
+    icon: mdiMonitorDashboard,
+    host: "monitor.ockham",
   },
 ]);
 </script>
