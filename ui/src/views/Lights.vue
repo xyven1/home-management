@@ -1,129 +1,132 @@
 <template>
-  <VAppBar>
-    <VAppBarTitle>
-      {{ svg?.[layer]?.name ?? "Loading" }}
-    </VAppBarTitle>
-    <VAppBarNavIcon>
-      <VBtn v-if="!editing.enabled" :icon="mdiLayersEdit" @click="startEditing" />
-      <VBtn v-else :icon="mdiCheckAll" @click="doneEditing" />
-    </VAppBarNavIcon>
-  </VAppBar>
-  <VCarousel
-    ref="carousel" v-model="layer" :items-to-show="1"
-    class="carousel" :show-arrows="smAndUp"
-    hide-delimiter-background
-  >
-    <VCarouselItem v-for="svgLayer in svg " :key="svgLayer.name" :disabled="!!sliderActiveSwitch || editing.regionSelected">
-      <svg viewBox="0 0 295 515" width="100%">
-        <image
-          v-if="svgLayer.background !== undefined" width="295" height="515"
-          x="0" y="0"
-          :href="backgroundHREF(svgLayer.background.name)"
-        />
-        <defs
-          v-for="(region, index) in svgLayer.regions.filter(r => r.sw?.brightness && !isNaN(r.sw.brightness))"
-          :key="index"
-        >
-          <linearGradient
-            :id="'gradient' + region.title.replace(' ', '')" x1="0%" y1="100%"
-            x2="0%" y2="0%"
-          >
-            <stop :offset="region.sw!.brightness! + '%'" stop-color="rgb(var(--v-theme-tertiary))" />
-            <stop
-              :offset="region.sw!.brightness! + '%'"
-              stop-color="color-mix(in oklab, rgb(var(--v-theme-lightOff)), rgb(var(--v-theme-lightOn)) 25%)"
-            />
-          </linearGradient>
-        </defs>
-        <path
-          v-for="(region, index) in svgLayer.regions " :key="index" :d="region.d"
-          style="cursor: pointer; stroke: transparent" :style="{
-            fill: editing.enabled
-              ? region.sn
-                ? 'rgb(var(--v-theme-success))'
-                : 'rgb(var(--v-theme-lightOff))'
-              : {
-                [-1]: 'rgb(var(--v-theme-lightNone))',
-                0: 'rgb(var(--v-theme-lightOff))',
-                1: region.sw?.brightness && !isNaN(region.sw.brightness) ? `url(#${'gradient' + region.title.replace(' ', '')})` : 'rgb(var(--v-theme-lightOn))',
-                2: 'rgb(var(--v-theme-info))',
-              }[region.sw?.state ?? -1] || 'rgb(var(--v-theme-error))'
-            , 'stroke-width': region.stroke ?? 0,
-          }" @click="editing.enabled ? startEditingRegion(region) : toggle(region.sn, region.sw)"
-          @pointermove.passive.capture="!editing.enabled && handlePointerMove($event, region.sw)"
-          @pointerup="!editing.enabled && closeSliderPopUp($event)"
-        >
-          <title>
-            {{ region.title }}
-          </title>
-        </path>
-      </svg>
-    </VCarouselItem>
-    <VOverlay
-      v-model="editing.regionSelected" contained class="align-end justify-center"
-      style="touch-action: none;"
-    >
-      <VContainer>
-        <VCard :title="`Edit ${editing.selectedRegion?.title ?? 'Unassigned'}`" :loading="editing.saving">
-          <VForm :disabled="editing.saving || editing.saveFailed" @submit.prevent>
-            <VCardText>
-              <VChipGroup v-model="switchListFilters" filter>
-                <VChip text="Show only unassigned" color="primary" />
-              </VChipGroup>
-              <VAutocomplete
-                v-model="editing.selectedSwitch" label="Assigned Switch" :items="switchListFilters === undefined ?
+  <template v-if="currentView === View.FloorPlan">
+    <VAppBar>
+      <VAppBarTitle>
+        {{ svg?.[layer]?.name ?? "Loading" }}
+      </VAppBarTitle>
+      <VAppBarNavIcon v-if="!editing.enabled">
+        <VBtn :icon="mdiViewList" @click="() => currentView = View.List" />
+      </VAppBarNavIcon>
+      <VAppBarNavIcon>
+        <VBtn v-if="!editing.enabled" :icon="mdiLayersEdit" @click="startEditing" />
+        <VBtn v-else :icon="mdiCheckAll" @click="doneEditing" />
+      </VAppBarNavIcon>
+    </VAppBar>
+    <VCarousel ref="carousel" v-model="layer" :items-to-show="1" class="carousel" :show-arrows="smAndUp"
+      hide-delimiter-background>
+      <VCarouselItem v-for="svgLayer in svg " :key="svgLayer.name"
+        :disabled="!!sliderActiveSwitch || editing.regionSelected">
+        <svg viewBox="0 0 295 515" width="100%">
+          <image v-if="svgLayer.background !== undefined" width="295" height="515" x="0" y="0"
+            :href="backgroundHREF(svgLayer.background.name)" />
+          <defs v-for="(region, index) in svgLayer.regions.filter(r => r.sw?.brightness && !isNaN(r.sw.brightness))"
+            :key="index">
+            <linearGradient :id="'gradient' + region.title.replace(' ', '')" x1="0%" y1="100%" x2="0%" y2="0%">
+              <stop :offset="region.sw!.brightness! + '%'" stop-color="rgb(var(--v-theme-tertiary))" />
+              <stop :offset="region.sw!.brightness! + '%'"
+                stop-color="color-mix(in oklab, rgb(var(--v-theme-lightOff)), rgb(var(--v-theme-lightOn)) 25%)" />
+            </linearGradient>
+          </defs>
+          <path v-for="(region, index) in svgLayer.regions " :key="index" :d="region.d"
+            style="cursor: pointer; stroke: transparent" :style="{
+              fill: editing.enabled
+                ? region.sn
+                  ? 'rgb(var(--v-theme-success))'
+                  : 'rgb(var(--v-theme-lightOff))'
+                : {
+                  [-1]: 'rgb(var(--v-theme-lightNone))',
+                  0: 'rgb(var(--v-theme-lightOff))',
+                  1: region.sw?.brightness && !isNaN(region.sw.brightness) ? `url(#${'gradient' + region.title.replace(' ', '')})` : 'rgb(var(--v-theme-lightOn))',
+                  2: 'rgb(var(--v-theme-info))',
+                }[region.sw?.state ?? -1] || 'rgb(var(--v-theme-error))'
+              , 'stroke-width': region.stroke ?? 0,
+            }" @click="editing.enabled ? startEditingRegion(region) : toggle(region.sn, region.sw)"
+            @pointermove.passive.capture="!editing.enabled && handlePointerMove($event, region.sw)"
+            @pointerup="!editing.enabled && closeSliderPopUp($event)">
+            <title>
+              {{ region.title }}
+            </title>
+          </path>
+        </svg>
+      </VCarouselItem>
+      <VOverlay v-model="editing.regionSelected" contained class="align-end justify-center" style="touch-action: none;">
+        <VContainer>
+          <VCard :title="`Edit ${editing.selectedRegion?.title ?? 'Unassigned'}`" :loading="editing.saving">
+            <VForm :disabled="editing.saving || editing.saveFailed" @submit.prevent>
+              <VCardText>
+                <VChipGroup v-model="switchListFilters" filter>
+                  <VChip text="Show only unassigned" color="primary" />
+                </VChipGroup>
+                <VAutocomplete v-model="editing.selectedSwitch" label="Assigned Switch" :items="switchListFilters === undefined ?
                   switchList : (() => {
                     const assigned = svg?.flatMap(screen => screen.regions).map(region => region.sn)
                     return switchList.filter(s => !assigned?.includes(s.serialNumber))
-                  })()"
-                :item-title="item => item.name" :item-value="item => item" hide-details="auto"
-                validate-on="submit" :rules="[v => !!v || 'Required']" auto-select-first
-              />
-            </VCardText>
-            <VCardActions>
-              <VBtn color="primary" type="submit" @click="saveEdit">
-                Save
-              </VBtn>
-              <VBtn @click="doneEditingRegion">
-                Cancel
-              </VBtn>
-            </VCardActions>
-          </VForm>
-          <VOverlay
-            v-model="editing.saveFailed" contained persistent
-            class="align-center justify-center"
-          >
-            <VAlert type="error" density="compact" prominent>
-              Failed to save
-              <VBtn variant="tonal" @click="doneEditingRegion">
-                OK
-              </VBtn>
-            </VAlert>
-          </VOverlay>
-        </VCard>
-      </VContainer>
-    </VOverlay>
-  </VCarousel>
-  <div
-    v-show="sliderActiveSwitch" class="slider"
-    @pointermove.passive.capture="updateBrightness" @pointerup="closeSliderPopUp" @pointerleave="closeSliderPopUp"
-  >
-    <div
-      class="innerSlider" :style="{
+                  })()" :item-title="item => item.name" :item-value="item => item" hide-details="auto"
+                  validate-on="submit" :rules="[v => !!v || 'Required']" auto-select-first />
+              </VCardText>
+              <VCardActions>
+                <VBtn color="primary" type="submit" @click="saveEdit">
+                  Save
+                </VBtn>
+                <VBtn @click="doneEditingRegion">
+                  Cancel
+                </VBtn>
+              </VCardActions>
+            </VForm>
+            <VOverlay v-model="editing.saveFailed" contained persistent class="align-center justify-center">
+              <VAlert type="error" density="compact" prominent>
+                Failed to save
+                <VBtn variant="tonal" @click="doneEditingRegion">
+                  OK
+                </VBtn>
+              </VAlert>
+            </VOverlay>
+          </VCard>
+        </VContainer>
+      </VOverlay>
+    </VCarousel>
+    <div v-show="sliderActiveSwitch" class="slider" @pointermove.passive.capture="updateBrightness"
+      @pointerup="closeSliderPopUp" @pointerleave="closeSliderPopUp">
+      <div class="innerSlider" :style="{
         background: `linear-gradient(to top, rgb(var(--v-theme-tertiary)), rgb(var(--v-theme-tertiary)) ${sliderBrightness}%, rgba(0,0,0,.5) ${sliderBrightness}%)`,
-        top: (sliderLocation?.y??0) + 'px',
-        left: (sliderLocation?.x??0) + 'px'
-      }"
-    />
-  </div>
+        top: (sliderLocation?.y ?? 0) + 'px',
+        left: (sliderLocation?.x ?? 0) + 'px'
+      }" />
+    </div>
+  </template>
+  <template v-else-if="currentView === View.List">
+    <VAppBar>
+      <VAppBarTitle />
+      <VAppBarNavIcon v-if="!editing.enabled">
+        <VBtn :icon="mdiFloorPlan" @click="currentView = View.FloorPlan" />
+      </VAppBarNavIcon>
+    </VAppBar>
+    <div class="d-flex flex-column h-100">
+      <div class="d-flex flex-column flex-grow-1 align-strech" style="overflow-y: auto">
+        <div class="flex-grow-1" />
+        <VBtn class="ma-1 text-none justify-start" size="x-large" :color="({ 0: '', 1: 'lightOn', 2: '' })[s.state] ?? 'error'" variant="flat"
+          v-for="s of listViewSwitchFilters === undefined ? allSwitches : unassignedSwitches"
+          @click="toggle(s.serialNumber, s)"
+          style="height: 40px"
+           :prepend-icon="({0: mdiLightSwitchOff, 1: mdiLightSwitch, 2: mdiLightSwitchOff})[s.state] ?? mdiAlertCircleOutline"
+        >
+          {{ s.name }}
+        </VBtn>
+      </div>
+      <hr style="border-color: rgb(var(--v-theme-surface))"/>
+      <VChipGroup v-model="listViewSwitchFilters" filter class="flex-shrink-0 justify-center">
+        <VChip text="Show only unassigned" color="primary" />
+      </VChipGroup>
+    </div>
+  </template>
 </template>
 <script lang="ts" setup>
 import { useAppStore } from "@/store/app";
 import { useLightsStore } from "@/store/lights";
 import { Region, SerialNumber, Svg, Switch } from "@home-management/lib/types/socket";
-import { mdiCheckAll, mdiLayersEdit } from "@mdi/js";
+import { mdiCheckAll, mdiLayersEdit, mdiViewList, mdiFloorPlan, mdiLightSwitchOff, mdiLightSwitch, mdiAlertCircleOutline } from "@mdi/js";
 import { storeToRefs } from "pinia";
-import { Ref, ref } from "vue";
+import { Ref, computed, ref, watch } from "vue";
 import { useDisplay, useTheme } from 'vuetify';
 import { VCarousel, VOverlay } from "vuetify/lib/components/index.mjs";
 
@@ -189,6 +192,31 @@ socket.on("connect", () => {
     }),
   );
 })
+
+// Views
+enum View {
+  List,
+  FloorPlan,
+}
+const currentView = ref<View>(View.FloorPlan);
+
+// List View
+watch(currentView, (newView) => {
+  if (newView === View.List) loadAllSwitches();
+});
+const listViewSwitchFilters = ref<number | undefined>(0);
+const allSwitches = ref<Switch[]>([]);
+const unassignedSwitches = computed(() => {
+  const assigned = svg.value?.flatMap((screen) => screen.regions).map((region) => region.sn);
+  return allSwitches.value.filter((s) => !assigned?.includes(s.serialNumber));
+});
+function loadAllSwitches() {
+  allSwitches.value = [];
+  socket.emitWithAck("getSwitches").then((res) => {
+    allSwitches.value = res;
+  });
+}
+
 
 // Editing
 const editing: Ref<{
@@ -316,7 +344,7 @@ function handlePointerMove(event: PointerEvent, sw: Switch | undefined): void {
     width: 100% !important;
   }
 
-  svg > path {
+  svg>path {
     touch-action: auto !important;
   }
 }
@@ -335,13 +363,15 @@ function handlePointerMove(event: PointerEvent, sw: Switch | undefined): void {
   position: absolute;
   width: v-bind('sliderWidth + "px"');
   height: v-bind('sliderHeight + "px"');
-  margin-top: v-bind('-sliderHeight / 2  + "px"');
-  margin-left: v-bind('-sliderWidth / 2  + "px"');
+  margin-top: v-bind('-sliderHeight / 2 + "px"');
+  margin-left: v-bind('-sliderWidth / 2 + "px"');
   border-radius: 16px;
   box-shadow: 0px 0px 25px 25px rgba(0, 0, 0, .5);
 }
+
 .v-carousel__controls {
   pointer-events: none;
+
   button {
     pointer-events: auto;
   }
