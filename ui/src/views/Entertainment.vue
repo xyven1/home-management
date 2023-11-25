@@ -3,19 +3,27 @@
     <VRow class="flex-grow-0" justify="center">
       <VCol style="max-width: 300px">
         <VCard
-          title="TV Control" :loading="movingTV" class=""
+          title="TV Control"
+          :loading="movingTV"
+          class=""
           max-width="300px"
         >
           <template #actions>
             <VBtn
-              color="primary" variant="tonal" class="flex-grow-1"
-              :disabled="movingTV" @click="setTVPosition(TVPosition.Up)"
+              color="primary"
+              variant="tonal"
+              class="flex-grow-1"
+              :disabled="movingTV"
+              @click="setTVPosition(TVPosition.Up)"
             >
               Up
             </VBtn>
             <VBtn
-              color="primary" variant="tonal" class="flex-grow-1"
-              :disabled="movingTV" @click="setTVPosition(TVPosition.Down)"
+              color="primary"
+              variant="tonal"
+              class="flex-grow-1"
+              :disabled="movingTV"
+              @click="setTVPosition(TVPosition.Down)"
             >
               Down
             </VBtn>

@@ -23,6 +23,7 @@
       class="carousel"
       :show-arrows="smAndUp"
       hide-delimiter-background
+      color="secondary"
     >
       <VCarouselItem
         v-for="svgLayer in svg"
@@ -304,19 +305,18 @@ socket.on("brightnessChange", (sn, brightness) => {
 socket.on("newSvg", (newSvg) => {
   svg.value = newSvg;
 });
-socket.on("connect", () => {
-  socket.emit("getSvg", (res: Svg) => {
-    svg.value = res;
-  });
-  socket.emit("getSwitches", (res) => {
-    res.forEach((s) => {
-      switches.value.set(s.serialNumber, s);
-      socket.emit("getSwitch", s.serialNumber, (sw) => {
-        if (!sw.ok) return;
-        const s = switches.value.get(sw.value.serialNumber)!;
-        s.state = sw.value.state;
-        if (sw.value.brightness) s.brightness = sw.value.brightness;
-      });
+
+socket.emit("getSvg", (res: Svg) => {
+  svg.value = res;
+});
+socket.emit("getSwitches", (res) => {
+  res.forEach((s) => {
+    switches.value.set(s.serialNumber, s);
+    socket.emit("getSwitch", s.serialNumber, (sw) => {
+      if (!sw.ok) return;
+      const s = switches.value.get(sw.value.serialNumber)!;
+      s.state = sw.value.state;
+      if (sw.value.brightness) s.brightness = sw.value.brightness;
     });
   });
 });

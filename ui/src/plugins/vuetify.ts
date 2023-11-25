@@ -9,8 +9,8 @@ import "vuetify/styles";
 
 // Composables
 import { createVuetify } from "vuetify";
-import { aliases, mdi } from "vuetify/iconsets/mdi-svg";
 import * as components from "vuetify/components";
+import { aliases, mdi } from "vuetify/iconsets/mdi-svg";
 import * as labsComponents from "vuetify/labs/components";
 
 // https://vuetifyjs.com/en/introduction/why-vuetify/#feature-guides
