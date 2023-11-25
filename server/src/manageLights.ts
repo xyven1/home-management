@@ -67,6 +67,12 @@ export default (io: AppServer): void => {
   function manageClient(deviceInfo: DeviceInfo): void {
     const client = wemo.client(deviceInfo);
     devices.set(client.device.serialNumber, client);
+    io.emit("newDevice", {
+      name: client.device.friendlyName,
+      serialNumber: client.device.serialNumber,
+      state: client.device.binaryState,
+      brightness: client.device.brightness,
+    });
 
     client.on("error", (err) => {
       console.error("Client error: %s", err);
@@ -120,16 +126,16 @@ export default (io: AppServer): void => {
   setInterval(discover, 10000);
 
   io.on("connection", (socket) => {
-    // returns switches from devices object to a callback function
     socket.on("getSwitches", (callback = () => {}) => {
-      console.log("getting switches");
       callback(
-        [...devices.values()].map((device) => ({
-          name: device.device.friendlyName,
-          serialNumber: device.device.serialNumber,
-          state: device.device.binaryState,
-          brightness: device.device.brightness,
-        }))
+        [...devices.values()].map((device) => {
+          return {
+            name: device.device.friendlyName,
+            serialNumber: device.device.serialNumber,
+            state: -1,
+            brightness: undefined,
+          };
+        })
       );
     });
 
@@ -174,7 +180,6 @@ export default (io: AppServer): void => {
     // allows client to toggle switches using serial number
     socket.on("toggleSwitch", async (serialNumber, wsCallback = () => {}) => {
       console.log("Toggling switch with serial number: " + serialNumber);
-      // io.emit("stateChange", serialNumber, 2);
       const device = devices.get(serialNumber);
       if (device !== undefined) {
         try {
@@ -311,6 +316,7 @@ export default (io: AppServer): void => {
         region.sn = data.sn;
         fs.writeFileSync(svgPath, JSON.stringify(svg, null, 2));
         wsCallback({ ok: true });
+        socket.broadcast.emit("newSvg", svg);
       } catch (err: any) {
         console.error(err);
         if (err instanceof Error)

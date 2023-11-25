@@ -1,5 +1,5 @@
-import * as Irrigation from "./irrigationConfig.js";
 import { type Branded } from "./brand.js";
+import * as Irrigation from "./irrigationConfig.js";
 
 export type SerialNumber = Branded<string, "SerialNumber">;
 
@@ -22,7 +22,6 @@ export type Region = {
   title: string;
   sn: SerialNumber;
   stroke?: number;
-  sw?: Switch;
 };
 
 export type SvgLayer = {
@@ -118,6 +117,8 @@ export type ServerToClientEvents = {
   // for lights
   stateChange: (sn: SerialNumber, state: number) => void;
   brightnessChange: (sn: SerialNumber, brightness: number) => void;
+  newDevice: (newDevice: Switch) => void;
+  newSvg: (svg: Svg) => void;
   // for irrigation
   irrigationConfigChange: (config: Irrigation.Config) => void;
   irrigationStateChange: (state: Irrigation.State) => void;
