@@ -37,10 +37,10 @@ const routes: RouteRecordRaw[] = [
     ],
   },
   {
-    path: "/redirect/:host",
+    path: "/redirect/:fqdn",
     component: () => {},
     beforeEnter: (to) => {
-      window.location.href = "https://" + to.params.host + ".viselaya.org";
+      window.location.href = "https://" + to.params.fqdn;
     },
   },
 ];

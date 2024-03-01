@@ -8,7 +8,7 @@
               v-for="(tool, i) of externalTools"
               :key="i"
               variant="tonal"
-              :to="`/redirect/${tool.host}`"
+              :to="`/redirect/${tool.fqdn}`"
               size="large"
               class="ma-2"
               color="secondary"
@@ -62,28 +62,30 @@ const { debug } = storeToRefs(useAppStore());
 type ExternalTool = {
   name: string;
   icon: string;
-  host: string;
+  fqdn: string;
 };
+
+const domain = location.hostname.split(".").slice(-2).join(".");
 const externalTools: Ref<ExternalTool[]> = ref([
   {
     name: "Router",
     icon: mdiRouterNetwork,
-    host: "router",
+    fqdn: `router.${domain}`
   },
   {
     name: "Plex",
     icon: mdiPlex,
-    host: "plex.ockham",
+    fqdn: `plex.ockham.${domain}`
   },
   {
     name: "Unifi",
     icon: mdiAlphaUCircle,
-    host: "unifi.ockham",
+    fqdn: `unifi.ockham.${domain}`
   },
   {
     name: "Monitor",
     icon: mdiMonitorDashboard,
-    host: "monitor.ockham",
+    fqdn: `monitor.ockham.${domain}`
   },
 ]);
 </script>
