@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 import compression from "compression";
 import cors from "cors";
 import express from "express";
@@ -11,6 +9,7 @@ import manageAudio from "./manageAudio.js";
 import manageLights from "./manageLights.js";
 import manageTV from "./manageTV.js";
 import { type AppServer } from "./types.js";
+import { fileURLToPath } from "url";
 
 // catch uncaught exceptions
 process.on("uncaughtException", (err) => {
@@ -20,8 +19,16 @@ process.on("uncaughtException", (err) => {
 
 const app = express();
 const server = http.createServer(app);
-const defaultDistPath =
-  "../home-management/node_modules/@home-management/ui/dist/";
+const defaultDistPath = (() => {
+  try {
+    const url = import.meta.resolve("@home-management/ui/package.json");
+    const file = fileURLToPath(url);
+    const dir = path.dirname(file);
+    return path.join(dir, "dist");
+  } catch (error) {
+    return "../ui/dist";
+  }
+})();
 
 const io: AppServer = new Server(server, {
   cors: {
@@ -33,11 +40,16 @@ const io: AppServer = new Server(server, {
 // middleware
 app.use(cors());
 app.use(compression());
-app.use(express.static(process.env.DIST_PATH ?? defaultDistPath, {
-  setHeaders: res => {
-    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, private");
-  }
-}));
+app.use(
+  express.static(process.env.DIST_PATH ?? defaultDistPath, {
+    setHeaders: (res) => {
+      res.setHeader(
+        "Cache-Control",
+        "no-store, no-cache, must-revalidate, private",
+      );
+    },
+  }),
+);
 
 app.get(/.*/, (_req, res) => {
   res.set("Cache-Control", "no-store, no-cache, must-revalidate, private");
@@ -46,8 +58,8 @@ app.get(/.*/, (_req, res) => {
       process.env.DIST_PATH !== undefined
         ? path.join(path.resolve(), process.env.DIST_PATH)
         : path.join(path.resolve(), defaultDistPath),
-      "index.html"
-    )
+      "index.html",
+    ),
   );
 });
 
